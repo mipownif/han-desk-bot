@@ -1,29 +1,23 @@
 #!/bin/bash
 set -euo pipefail
 ROOT="${HOME}/quantum-server"
-if [ ! -d "$ROOT" ]; then
-  echo "missing $ROOT"
-  exit 1
-fi
+mkdir -p "$ROOT"
 cd "$ROOT"
 BASE="https://raw.githubusercontent.com/mipownif/han-desk-bot/main"
-curl -fsSL "$BASE/han-api.js" -o han-api.js
-curl -fsSL "$BASE/han-chat.js" -o han-chat.js
-curl -fsSL "$BASE/han-auto.js" -o han-auto.js
+for f in package.json index.js han-api.js han-chat.js han-auto.js; do
+  curl -fsSL "$BASE/$f" -o "$f"
+done
 python3 - << 'PY'
 from pathlib import Path
-p = Path("index.js")
-t = p.read_text()
-if 'require("./han-api").attach(app);' not in t:
-    if "const app = express();" not in t:
-        raise SystemExit("index.js has no const app = express();")
-    t = t.replace(
-        "const app = express();",
-        "const app = express();\nrequire(\"./han-api\").attach(app);\nrequire(\"./han-chat\").attach(app);\nrequire(\"./han-auto\").attach(app);",
-        1,
-    )
-    p.write_text(t)
-print("files", Path("han-api.js").stat().st_size, Path("han-chat.js").stat().st_size, Path("han-auto.js").stat().st_size)
+need = ["package.json", "index.js", "han-api.js", "han-chat.js", "han-auto.js"]
+for name in need:
+    p = Path(name)
+    if not p.is_file() or p.stat().st_size < 20:
+        raise SystemExit("missing " + name)
+text = Path("index.js").read_text()
+if 'require("./han-api").attach(app);' not in text:
+    raise SystemExit("index.js missing han-api attach")
+print("ok", {n: Path(n).stat().st_size for n in need})
 PY
 gcloud run deploy quantum-server \
   --source . \
