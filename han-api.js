@@ -304,14 +304,99 @@ async function cancel(req, res) {
   }
 }
 
+async function book(req, res) {
+  const instId = instOk(req.query && req.query.instId) ? String(req.query.instId) : "BTC-USDT";
+  try {
+    const r = await fetch(OKX + "/api/v5/market/books?instId=" + encodeURIComponent(instId) + "&sz=15");
+    const body = await r.json();
+    const row = body && body.data && body.data[0];
+    if (!row) { res.status(502).json({ ok: false, message: "book empty" }); return; }
+    function lvl(arr) {
+      return (arr || []).map(function (x) { return { px: num(x[0]), sz: num(x[1]) }; });
+    }
+    res.json({ ok: true, instId: instId, bids: lvl(row.bids), asks: lvl(row.asks), ts: num(row.ts) });
+  } catch (e) {
+    res.status(502).json({ ok: false, message: "book failed" });
+  }
+}
+
+async function trades(req, res) {
+  const instId = instOk(req.query && req.query.instId) ? String(req.query.instId) : "BTC-USDT";
+  try {
+    const r = await fetch(OKX + "/api/v5/market/trades?instId=" + encodeURIComponent(instId) + "&limit=24");
+    const body = await r.json();
+    const rows = body && Array.isArray(body.data) ? body.data : [];
+    res.json({
+      ok: true,
+      instId: instId,
+      trades: rows.map(function (row) {
+        return { px: num(row.px), sz: num(row.sz), side: String(row.side || ""), ts: num(row.ts) };
+      }),
+    });
+  } catch (e) {
+    res.status(502).json({ ok: false, message: "trades failed" });
+  }
+}
+
+async function history(req, res) {
+  if (!gate(req, res)) return;
+  try {
+    const body = await okxPrivate("GET", "/api/v5/trade/orders-history?instType=SPOT");
+    const rows = body && Array.isArray(body.data) ? body.data : [];
+    res.json({
+      ok: true,
+      orders: rows.slice(0, 40).map(function (row) {
+        return {
+          ordId: String(row.ordId || ""),
+          instId: String(row.instId || ""),
+          side: String(row.side || ""),
+          ordType: String(row.ordType || ""),
+          px: String(row.px || row.avgPx || ""),
+          sz: String(row.sz || ""),
+          fillSz: String(row.accFillSz || row.fillSz || "0"),
+          state: String(row.state || ""),
+        };
+      }),
+    });
+  } catch (e) {
+    res.status(502).json({ ok: false, reason: "error", message: "history failed" });
+  }
+}
+
+async function fills(req, res) {
+  if (!gate(req, res)) return;
+  try {
+    const body = await okxPrivate("GET", "/api/v5/trade/fills?instType=SPOT");
+    const rows = body && Array.isArray(body.data) ? body.data : [];
+    res.json({
+      ok: true,
+      fills: rows.slice(0, 40).map(function (row) {
+        return {
+          instId: String(row.instId || ""),
+          side: String(row.side || ""),
+          px: String(row.fillPx || row.px || ""),
+          sz: String(row.fillSz || row.sz || ""),
+          ts: num(row.ts),
+        };
+      }),
+    });
+  } catch (e) {
+    res.status(502).json({ ok: false, reason: "error", message: "fills failed" });
+  }
+}
+
 function attach(app) {
   app.use(function (req, res, next) {
     if (req.method === "GET" && req.path === "/health") return health(req, res);
     if (req.method === "GET" && req.path === "/api/instruments") return instruments(req, res);
     if (req.method === "GET" && req.path === "/api/ticker") return ticker(req, res);
     if (req.method === "GET" && req.path === "/api/candles") return candles(req, res);
+    if (req.method === "GET" && req.path === "/api/book") return book(req, res);
+    if (req.method === "GET" && req.path === "/api/trades") return trades(req, res);
     if (req.method === "GET" && req.path === "/api/balance") return balance(req, res);
     if (req.method === "GET" && req.path === "/api/orders") return orders(req, res);
+    if (req.method === "GET" && req.path === "/api/orders-history") return history(req, res);
+    if (req.method === "GET" && req.path === "/api/fills") return fills(req, res);
     if (req.method === "POST" && req.path === "/api/order") return order(req, res);
     if (req.method === "POST" && req.path === "/api/order-cancel") return cancel(req, res);
     next();

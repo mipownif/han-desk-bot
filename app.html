@@ -14,168 +14,169 @@
     }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body { margin: 0; background: var(--bg); color: var(--fg);
-      font: 15px/1.4 "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; }
-    body {
-      min-height: 100dvh;
-      padding: calc(8px + var(--sat) + var(--tg-content-safe-area-inset-top, 0px)) 14px
-        calc(24px + var(--sab) + var(--tg-content-safe-area-inset-bottom, 0px));
-    }
-    .wrap { max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
-    header { display: flex; justify-content: space-between; align-items: flex-start; }
-    .mark { height: 40px; color: var(--mute); }
-    .pill { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 6px 10px;
-      font-size: 11px; letter-spacing: .14em; text-transform: uppercase; background: var(--raised); color: var(--up); }
-    .who { font-size: 12px; color: var(--faint); text-align: right; margin-top: 6px; }
-    .search { position: relative; }
-    .search input { width: 100%; height: 48px; border: 0; border-radius: 12px; background: var(--card); color: var(--fg);
-      font: 500 16px inherit; padding: 0 14px; outline: none; box-shadow: 0 0 0 1px rgba(255,255,255,.06); }
-    .hits { display: none; margin-top: 6px; background: var(--card); border-radius: 12px; overflow: hidden;
-      box-shadow: 0 12px 40px rgba(0,0,0,.4); }
+      font: 14px/1.4 "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; }
+    body { min-height: 100dvh; padding: calc(8px + var(--sat) + var(--tg-content-safe-area-inset-top, 0px)) 12px calc(72px + var(--sab) + var(--tg-content-safe-area-inset-bottom, 0px)); }
+    .wrap { max-width: 520px; margin: 0 auto; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .mark { height: 34px; color: var(--mute); }
+    .pill { font-size: 10px; letter-spacing: .16em; color: var(--up); }
+    .search input { width: 100%; height: 44px; border: 0; border-radius: 10px; background: var(--card); color: var(--fg); padding: 0 12px; font: 500 15px inherit; outline: none; }
+    .hits { display: none; background: var(--card); border-radius: 10px; margin-top: 6px; overflow: hidden; }
     .hits.on { display: block; }
-    .hits button { display: flex; justify-content: space-between; width: 100%; min-height: 48px; border: 0;
-      background: transparent; color: var(--fg); padding: 0 14px; font: 500 15px inherit; text-align: left; }
-    .hits button span { color: var(--mute); font: 13px "IBM Plex Mono", monospace; }
-    .watch { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; -webkit-overflow-scrolling: touch; }
-    .watch button { flex: 0 0 auto; height: 40px; border: 0; border-radius: 999px; padding: 0 14px;
-      background: var(--card); color: var(--mute); font: 500 13px inherit; }
+    .hits button { display: flex; justify-content: space-between; width: 100%; min-height: 44px; border: 0; background: 0; color: var(--fg); padding: 0 12px; font: 500 14px inherit; }
+    .hits span { color: var(--mute); font: 12px "IBM Plex Mono", monospace; }
+    .watch { display: flex; gap: 6px; overflow-x: auto; margin: 8px 0; }
+    .watch button { flex: 0 0 auto; height: 34px; border: 0; border-radius: 999px; padding: 0 12px; background: var(--card); color: var(--mute); font: 500 12px inherit; }
     .watch button.on { background: var(--raised); color: var(--fg); }
-    .card { background: var(--card); border-radius: 16px; padding: 14px 16px; box-shadow: 0 0 0 1px rgba(255,255,255,.06); }
-    .k { font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--faint); }
-    .px { font: 500 30px/1.05 "IBM Plex Mono", ui-monospace, monospace; letter-spacing: -.03em; margin: 6px 0 2px; }
+    .tab { display: none; flex-direction: column; gap: 10px; }
+    .tab.on { display: flex; }
+    .card { background: var(--card); border-radius: 14px; padding: 12px; }
+    .k { font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--faint); }
+    .px { font: 500 28px/1.05 "IBM Plex Mono", monospace; margin: 4px 0; }
     .up { color: var(--up); } .dn { color: var(--down); }
-    .dim { color: var(--mute); font-size: 13px; }
-    .grid3, .grid4 { display: grid; gap: 8px; margin-top: 10px; }
-    .grid3 { grid-template-columns: 1fr 1fr 1fr; }
-    .grid4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
-    .cell { background: var(--sunken); border-radius: 8px; padding: 8px 10px; }
-    .v { font: 13px/1.35 "IBM Plex Mono", ui-monospace, monospace; margin-top: 4px; }
-    .seg { display: grid; gap: 4px; background: var(--sunken); padding: 4px; border-radius: 10px; }
+    .dim { color: var(--mute); font-size: 12px; }
+    .mono { font: 12px/1.35 "IBM Plex Mono", monospace; }
+    .seg { display: grid; gap: 3px; background: var(--sunken); padding: 3px; border-radius: 8px; }
     .seg.p2 { grid-template-columns: 1fr 1fr; }
+    .seg.p3 { grid-template-columns: 1fr 1fr 1fr; }
     .seg.p4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
     .seg.p6 { grid-template-columns: repeat(6, 1fr); }
-    .seg button { min-height: 40px; border: 0; border-radius: 8px; background: transparent; color: var(--mute); font: 500 12px inherit; }
+    .seg button { min-height: 36px; border: 0; border-radius: 6px; background: 0; color: var(--mute); font: 500 12px inherit; }
     .seg button.on { background: var(--raised); color: var(--fg); }
-    .gap { display: flex; flex-direction: column; gap: 10px; }
-    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    input.sz { width: 100%; height: 48px; border: 0; border-radius: 8px; background: var(--sunken); color: var(--fg);
-      font: 500 16px "IBM Plex Mono", monospace; padding: 0 12px; outline: none; }
-    .field span { display: block; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--faint); margin: 0 0 6px; }
-    .btn { min-height: 48px; width: 100%; border: 0; border-radius: 10px; font: 500 15px inherit; background: var(--metal); color: var(--bg); }
+    svg.chart { width: 100%; height: 150px; display: block; }
+    .book { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font: 11px/1.5 "IBM Plex Mono", monospace; }
+    .asks div { color: var(--down); display: flex; justify-content: space-between; }
+    .bids div { color: var(--up); display: flex; justify-content: space-between; }
+    .tape { max-height: 180px; overflow: auto; font: 11px/1.5 "IBM Plex Mono", monospace; }
+    .tape i { font-style: normal; float: right; color: var(--mute); }
+    input.sz { width: 100%; height: 44px; border: 0; border-radius: 8px; background: var(--sunken); color: var(--fg); padding: 0 10px; font: 500 15px "IBM Plex Mono", monospace; outline: none; }
+    .field span { display: block; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--faint); margin: 0 0 4px; }
+    .btn { min-height: 44px; width: 100%; border: 0; border-radius: 10px; font: 500 14px inherit; background: var(--metal); color: var(--bg); }
     .btn.ghost { background: var(--raised); color: var(--fg); }
     .btn.kill { background: var(--down); color: #fff; }
     .btn.buy { background: var(--up); color: var(--bg); }
-    svg.chart { width: 100%; height: 168px; display: block; }
-    .orders div { display: flex; justify-content: space-between; align-items: center; gap: 8px;
-      background: var(--sunken); border-radius: 8px; padding: 10px 12px; margin-top: 6px; font-size: 13px; }
-    .orders button { height: 36px; padding: 0 12px; border: 0; border-radius: 8px; background: var(--raised); color: var(--fg); }
-    .sheet { display: none; position: fixed; left: 12px; right: 12px; bottom: calc(12px + var(--sab));
-      background: var(--card); border-radius: 16px; padding: 16px; z-index: 30; box-shadow: 0 16px 40px rgba(0,0,0,.5); }
+    .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid #1a1e24; font-size: 13px; }
+    .nav { position: fixed; left: 0; right: 0; bottom: 0; display: grid; grid-template-columns: 1fr 1fr 1fr 1fr;
+      background: #0e1116; padding: 6px 8px calc(8px + var(--sab) + var(--tg-content-safe-area-inset-bottom, 0px));
+      box-shadow: 0 -1px 0 rgba(255,255,255,.06); }
+    .nav button { height: 44px; border: 0; background: 0; color: var(--faint); font: 500 12px inherit; }
+    .nav button.on { color: var(--fg); }
+    .sheet { display: none; position: fixed; left: 10px; right: 10px; bottom: calc(76px + var(--sab)); background: var(--card); border-radius: 14px; padding: 14px; z-index: 40; }
     .sheet.on { display: block; }
-    .msg { font-size: 13px; color: var(--mute); min-height: 18px; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
-      <svg class="mark" viewBox="0 0 300 112" aria-label="HAN">
-        <defs><linearGradient id="m" x1=".08" y1="0" x2=".22" y2="1">
-          <stop offset="0%" stop-color="#f7f8fa"/><stop offset="38%" stop-color="#cfd5dd"/><stop offset="100%" stop-color="#8a939e"/>
-        </linearGradient></defs>
+      <svg class="mark" viewBox="0 0 300 112">
+        <defs><linearGradient id="m" x1=".08" y1="0" x2=".22" y2="1"><stop offset="0%" stop-color="#f7f8fa"/><stop offset="100%" stop-color="#8a939e"/></linearGradient></defs>
         <g fill="url(#m)" transform="translate(16 0) skewX(-8)">
           <path d="M18 8h22v30h18V8h22v72H58V50H40v30H18l-16 0 16-18Z"/>
           <path fill-rule="evenodd" d="M128 8 192 80h-30l-12-26h-16L124 80H98L128 8Zm2 20 18 24h-24L130 28Z"/>
           <path d="M206 8h24v20L268 8h26v72h-26V54L230 80h-24V8Z"/>
         </g>
-        <text x="150" y="106" text-anchor="middle" fill="currentColor" style="font:500 10px 'IBM Plex Sans';letter-spacing:.72em">AND ONLY</text>
       </svg>
-      <div>
-        <span class="pill" id="pill">LIVE</span>
-        <div class="who" id="who">HAN</div>
-      </div>
+      <span class="pill" id="pill">OKX SPOT</span>
     </header>
-
-    <div class="search">
-      <input id="q" type="search" placeholder="코인 검색  BTC  ETH  PEPE  SOL" enterkeyhint="search" autocomplete="off" />
-      <div class="hits" id="hits"></div>
-    </div>
+    <div class="search"><input id="q" type="search" placeholder="마켓 검색  BTC  PEPE  SOL" autocomplete="off" /></div>
+    <div class="hits" id="hits"></div>
     <div class="watch" id="watch"></div>
 
-    <section class="card">
-      <div style="display:flex;justify-content:space-between;align-items:baseline">
-        <span class="k" id="sym">BTC-USDT</span>
-        <span class="k" id="chg">—</span>
+    <section class="tab on" id="t-mkt">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between"><span class="k" id="sym">BTC-USDT</span><span class="k" id="chg">—</span></div>
+        <div class="px" id="last">—</div>
+        <div class="dim" id="rng">—</div>
+        <div class="seg p6" id="tf" style="margin:8px 0">
+          <button data-b="1m">1m</button><button data-b="5m">5m</button><button data-b="15m" class="on">15m</button>
+          <button data-b="1H">1H</button><button data-b="4H">4H</button><button data-b="1D">1D</button>
+        </div>
+        <svg class="chart" id="chart" viewBox="0 0 320 150" preserveAspectRatio="none"></svg>
+        <div class="grid2" style="margin-top:8px">
+          <div class="cell dim">Bid <b class="mono up" id="bid">—</b></div>
+          <div class="cell dim" style="text-align:right">Ask <b class="mono dn" id="ask">—</b></div>
+        </div>
       </div>
-      <div class="px" id="last">—</div>
-      <div class="dim" id="rng">고가 · 저가</div>
-      <div class="seg p6" id="tf" style="margin:10px 0 8px">
-        <button data-b="1m">1m</button>
-        <button data-b="5m">5m</button>
-        <button data-b="15m" class="on">15m</button>
-        <button data-b="1H">1H</button>
-        <button data-b="4H">4H</button>
-        <button data-b="1D">1D</button>
-      </div>
-      <svg class="chart" id="chart" viewBox="0 0 320 168" preserveAspectRatio="none"></svg>
-      <div class="grid4">
-        <div class="cell"><div class="k">Bid</div><div class="v" id="bid">—</div></div>
-        <div class="cell"><div class="k">Ask</div><div class="v" id="ask">—</div></div>
-        <div class="cell"><div class="k">Spread</div><div class="v" id="spr">—</div></div>
-        <div class="cell"><div class="k">24h</div><div class="v" id="vol">—</div></div>
+      <div class="card">
+        <div class="seg p2" id="md">
+          <button data-p="book" class="on">호가</button>
+          <button data-p="tape">체결</button>
+        </div>
+        <div id="book" class="book" style="margin-top:8px"></div>
+        <div id="tape" class="tape" style="display:none;margin-top:8px"></div>
       </div>
     </section>
 
-    <section class="card">
-      <div class="k">잔고</div>
-      <div class="v" id="bal" style="margin-top:8px;white-space:pre">텔레그램에서 실잔고</div>
+    <section class="tab" id="t-trd">
+      <div class="card" style="display:flex;flex-direction:column;gap:8px">
+        <div class="k" id="trsym">BTC-USDT 현물</div>
+        <div class="seg p2" id="side"><button data-s="buy" class="on">매수</button><button data-s="sell">매도</button></div>
+        <div class="seg p2" id="typ"><button data-t="market" class="on">시장가</button><button data-t="limit">지정가</button></div>
+        <label class="field"><span id="szlab">수량 USDT</span><input class="sz" id="sz" value="25" inputmode="decimal" /></label>
+        <div class="seg p4" id="chips"><button data-c="10">10</button><button data-c="25" class="on">25</button><button data-c="50">50</button><button data-c="max">최대</button></div>
+        <label class="field" id="pxrow" style="display:none"><span>지정가</span><input class="sz" id="lpx" inputmode="decimal" /></label>
+        <div class="dim" id="prev">—</div>
+        <div class="dim" id="avail">가용 —</div>
+        <button class="btn buy" id="go">주문 검토</button>
+        <div class="dim" id="omsg"></div>
+      </div>
     </section>
 
-    <section class="card gap">
-      <div style="display:flex;justify-content:space-between"><span class="k">주문</span><span class="k" id="tkstat">현물</span></div>
-      <div class="seg p2" id="side"><button data-s="buy" class="on">매수</button><button data-s="sell">매도</button></div>
-      <div class="seg p2" id="typ"><button data-t="market" class="on">시장가</button><button data-t="limit">지정가</button></div>
-      <label class="field"><span id="szlab">수량 USDT</span><input class="sz" id="sz" value="25" inputmode="decimal" /></label>
-      <div class="seg p4" id="chips">
-        <button data-c="10">10</button><button data-c="25" class="on">25</button>
-        <button data-c="50">50</button><button data-c="100">100</button>
+    <section class="tab" id="t-ord">
+      <div class="card">
+        <div class="k">미체결</div>
+        <div id="open"></div>
       </div>
-      <label class="field" id="pxrow" style="display:none"><span>지정가</span><input class="sz" id="lpx" inputmode="decimal" /></label>
-      <div class="dim" id="prev">—</div>
-      <button class="btn buy" id="go">주문 검토</button>
-      <div class="msg" id="omsg"></div>
-      <div class="orders" id="olist"></div>
+      <div class="card">
+        <div class="k">체결</div>
+        <div id="fills"></div>
+      </div>
+      <div class="card">
+        <div class="k">주문 기록</div>
+        <div id="hist"></div>
+      </div>
     </section>
 
-    <section class="card gap">
-      <div style="display:flex;justify-content:space-between"><span class="k">자동</span><span class="k" id="amode">해제</span></div>
-      <button class="btn kill" id="kill">긴급정지</button>
-      <div class="row2">
-        <label class="field"><span>건당 USDT</span><input class="sz" id="amax" value="25" inputmode="numeric" /></label>
-        <label class="field"><span>일일 한도</span><input class="sz" id="aday" value="200" inputmode="numeric" /></label>
+    <section class="tab" id="t-ast">
+      <div class="card">
+        <div class="k">자산</div>
+        <div class="px" id="eq">—</div>
+        <div class="mono" id="bal" style="white-space:pre;margin-top:8px">텔레그램에서 실잔고</div>
       </div>
-      <div class="dim" id="agate">지금 보고 있는 페어만 ARM. 검색한 종목으로 바뀜.</div>
-      <button class="btn ghost" id="arm">ARM 검토</button>
+      <div class="card" style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;justify-content:space-between"><span class="k">자동</span><span class="k" id="amode">해제</span></div>
+        <div class="dim">지금 보고 있는 마켓만 ARM. 건당/일일 한도 안에서 시장가.</div>
+        <div class="grid2">
+          <label class="field"><span>건당</span><input class="sz" id="amax" value="25" inputmode="numeric" /></label>
+          <label class="field"><span>일일</span><input class="sz" id="aday" value="200" inputmode="numeric" /></label>
+        </div>
+        <button class="btn kill" id="kill">긴급정지</button>
+        <button class="btn ghost" id="arm">ARM 검토</button>
+      </div>
     </section>
   </div>
 
+  <nav class="nav">
+    <button class="on" data-t="t-mkt">시세</button>
+    <button data-t="t-trd">거래</button>
+    <button data-t="t-ord">주문</button>
+    <button data-t="t-ast">자산</button>
+  </nav>
   <div class="sheet" id="sheet">
     <div class="k" id="sheett">확인</div>
-    <p class="dim" id="sheetb" style="margin:10px 0 14px"></p>
-    <div class="row2">
+    <p class="dim" id="sheetb" style="margin:8px 0 12px"></p>
+    <div class="grid2">
       <button class="btn ghost" id="sheetx">취소</button>
-      <button class="btn kill" id="sheety">실주문</button>
+      <button class="btn kill" id="sheety">확인</button>
     </div>
   </div>
 
   <script>
     var tg = window.Telegram && window.Telegram.WebApp;
     var init = (tg && tg.initData) || "";
-    var inst = "BTC-USDT";
-    var bar = "15m";
-    var side = "buy";
-    var typ = "market";
-    var quote = null;
-    var sheetMode = "";
-    var timer = 0;
+    var inst = "BTC-USDT", bar = "15m", side = "buy", typ = "market", pane = "book";
+    var quote = null, bal = null, tab = "t-mkt", sheetMode = "";
     var WKEY = "han-watch";
     if (tg) {
       tg.ready(); tg.expand();
@@ -184,66 +185,78 @@
       tg.disableVerticalSwipes && tg.disableVerticalSwipes();
     }
     function $(id) { return document.getElementById(id); }
-    $("who").textContent = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.first_name) || "HAN";
-    function hap(t) { try { tg && tg.HapticFeedback && tg.HapticFeedback.impactOccurred(t || "light"); } catch (e) {} }
+    function hap(k) { try { tg && tg.HapticFeedback && tg.HapticFeedback.impactOccurred(k || "light"); } catch (e) {} }
     function hdr() { var h = { "content-type": "application/json" }; if (init) h["X-Telegram-Init-Data"] = init; return h; }
     function n(v) { var x = Number(v); return Number.isFinite(x) ? x : 0; }
-    function fmt(v) { v = n(v); if (!v) return "—"; return v >= 100 ? v.toLocaleString(undefined, { maximumFractionDigits: 2 }) : v.toPrecision(6).replace(/0+$/,"").replace(/\.$/,""); }
-    async function jget(url) { var r = await fetch(url, { headers: hdr() }); try { return await r.json(); } catch (e) { return { ok:false }; } }
-    async function jpost(url, body) { var r = await fetch(url, { method:"POST", headers: hdr(), body: JSON.stringify(body) }); try { return await r.json(); } catch (e) { return { ok:false }; } }
-    function setOn(root, attr, val) {
-      [].forEach.call(root.querySelectorAll("button"), function (b) { b.className = b.getAttribute(attr) === val ? "on" : ""; });
-    }
+    function fmt(v) { v = n(v); if (!v) return "—"; return v >= 1000 ? v.toLocaleString(undefined,{maximumFractionDigits:2}) : String(Number(v.toPrecision(6))); }
+    async function jget(u) { var r = await fetch(u, { headers: hdr() }); try { return await r.json(); } catch (e) { return { ok:false }; } }
+    async function jpost(u, b) { var r = await fetch(u, { method: "POST", headers: hdr(), body: JSON.stringify(b) }); try { return await r.json(); } catch (e) { return { ok:false }; } }
+    function setOn(el, a, v) { [].forEach.call(el.querySelectorAll("button"), function (b) { b.className = b.getAttribute(a) === v ? "on" : ""; }); }
     function watch() { try { return JSON.parse(localStorage.getItem(WKEY) || '["BTC-USDT","ETH-USDT","SOL-USDT"]'); } catch (e) { return ["BTC-USDT"]; } }
-    function saveWatch(rows) { localStorage.setItem(WKEY, JSON.stringify(rows)); renderWatch(); }
     function renderWatch() {
-      var rows = watch();
-      $("watch").innerHTML = rows.map(function (id) {
-        return '<button data-id="'+id+'" class="'+(id===inst?"on":"")+'">'+id.replace("-USDT","")+'</button>';
-      }).join("");
+      $("watch").innerHTML = watch().map(function (id) { return '<button data-id="'+id+'" class="'+(id===inst?"on":"")+'">'+id.replace("-USDT","")+"</button>"; }).join("");
     }
     function pick(id) {
       inst = id;
-      var rows = watch();
-      if (rows.indexOf(id) < 0) { rows.unshift(id); if (rows.length > 12) rows.pop(); saveWatch(rows); }
-      else renderWatch();
-      $("hits").className = "hits"; $("q").blur();
-      hap(); loadAll();
+      var w = watch(); if (w.indexOf(id) < 0) { w.unshift(id); if (w.length > 14) w.pop(); localStorage.setItem(WKEY, JSON.stringify(w)); }
+      $("hits").className = "hits"; $("q").value = ""; $("q").blur();
+      renderWatch(); hap(); refresh();
     }
     $("watch").onclick = function (e) { var b = e.target.closest("button"); if (b) pick(b.getAttribute("data-id")); };
-    var searchT;
+    var st;
     $("q").oninput = function () {
-      clearTimeout(searchT);
+      clearTimeout(st);
       var q = $("q").value.trim();
       if (!q) { $("hits").className = "hits"; return; }
-      searchT = setTimeout(async function () {
+      st = setTimeout(async function () {
         var j = await jget("/api/instruments?q=" + encodeURIComponent(q));
-        var box = $("hits");
-        if (!j.ok || !j.rows.length) { box.innerHTML = '<button disabled>없음</button>'; box.className = "hits on"; return; }
-        box.innerHTML = j.rows.map(function (it) {
-          return '<button data-id="'+it.instId+'">'+it.instId+'<span>'+it.base+'</span></button>';
-        }).join("");
-        box.className = "hits on";
-      }, 180);
+        $("hits").className = "hits on";
+        $("hits").innerHTML = (j.rows || []).length
+          ? j.rows.map(function (it) { return '<button data-id="'+it.instId+'">'+it.instId+"<span>"+it.base+"</span></button>"; }).join("")
+          : "<button disabled>없음</button>";
+      }, 160);
     };
     $("hits").onclick = function (e) { var b = e.target.closest("button"); if (b && b.getAttribute("data-id")) pick(b.getAttribute("data-id")); };
-    $("tf").onclick = function (e) { var b = e.target.closest("button"); if (!b) return; bar = b.getAttribute("data-b"); setOn($("tf"), "data-b", bar); hap(); loadChart(); };
+    document.querySelector(".nav").onclick = function (e) {
+      var b = e.target.closest("button"); if (!b) return;
+      tab = b.getAttribute("data-t");
+      [].forEach.call(document.querySelectorAll(".nav button"), function (x) { x.className = x === b ? "on" : ""; });
+      [].forEach.call(document.querySelectorAll(".tab"), function (x) { x.className = "tab" + (x.id === tab ? " on" : ""); });
+      hap(); refresh();
+    };
+    $("tf").onclick = function (e) { var b = e.target.closest("button"); if (!b) return; bar = b.getAttribute("data-b"); setOn($("tf"), "data-b", bar); loadChart(); };
+    $("md").onclick = function (e) {
+      var b = e.target.closest("button"); if (!b) return; pane = b.getAttribute("data-p"); setOn($("md"), "data-p", pane);
+      $("book").style.display = pane === "book" ? "grid" : "none";
+      $("tape").style.display = pane === "tape" ? "block" : "none";
+    };
     $("side").onclick = function (e) { var b = e.target.closest("button"); if (!b) return; side = b.getAttribute("data-s"); setOn($("side"), "data-s", side); preview(); };
     $("typ").onclick = function (e) {
       var b = e.target.closest("button"); if (!b) return; typ = b.getAttribute("data-t"); setOn($("typ"), "data-t", typ);
-      $("pxrow").style.display = typ === "limit" ? "" : "none";
+      $("pxrow").style.display = typ === "limit" ? "block" : "none";
       if (typ === "limit" && quote) $("lpx").value = quote.last;
       preview();
     };
-    $("chips").onclick = function (e) { var b = e.target.closest("button"); if (!b) return; $("sz").value = b.getAttribute("data-c"); setOn($("chips"), "data-c", $("sz").value); preview(); };
+    $("chips").onclick = function (e) {
+      var b = e.target.closest("button"); if (!b) return;
+      if (b.getAttribute("data-c") === "max") {
+        var usdt = avail("USDT"), base = avail(inst.split("-")[0]);
+        $("sz").value = side === "buy" ? (usdt || 0) : (base || 0);
+      } else $("sz").value = b.getAttribute("data-c");
+      preview();
+    };
     $("sz").oninput = preview;
+    function avail(ccy) {
+      if (!bal || !bal.rows) return 0;
+      var row = bal.rows.filter(function (r) { return r.ccy === ccy; })[0];
+      return row ? n(row.avail) : 0;
+    }
     function preview() {
-      var sz = n($("sz").value);
       var base = inst.split("-")[0];
       $("szlab").textContent = "수량 " + (side === "buy" ? "USDT" : base);
-      if (!(sz > 0) || !quote) { $("prev").textContent = inst; return; }
-      var px = typ === "limit" ? n($("lpx").value) : n(quote.last);
-      $("prev").textContent = (side === "buy" ? "매수 " : "매도 ") + inst + " · " + (side === "buy" ? (fmt(sz) + " USDT") : (sz + " " + base));
+      $("trsym").textContent = inst + " 현물";
+      $("avail").textContent = "가용 USDT " + fmt(avail("USDT")) + " · " + base + " " + fmt(avail(base));
+      $("prev").textContent = (side === "buy" ? "매수 " : "매도 ") + inst + " · " + $("sz").value;
       $("go").className = "btn " + (side === "buy" ? "buy" : "kill");
     }
     function draw(cs) {
@@ -252,86 +265,118 @@
       var min = Math.min.apply(null, cs.map(function (b) { return b.l; }));
       var max = Math.max.apply(null, cs.map(function (b) { return b.h; }));
       var vmax = Math.max.apply(null, cs.map(function (b) { return b.v || 0; })) || 1;
-      var span = max - min || 1, w = 320, top = 4, ch = 118, vh = 36, slot = w / cs.length, bw = Math.max(1.6, slot * .62);
-      function y(v) { return top + (1 - (v - min) / span) * ch; }
-      cs.forEach(function (bar, i) {
-        var up = bar.c >= bar.o, x = i * slot + (slot - bw) / 2, mid = x + bw / 2;
-        var t = y(Math.max(bar.o, bar.c)), btm = y(Math.min(bar.o, bar.c));
-        var col = up ? "#5ec98a" : "#e06a72";
-        var volH = ((bar.v || 0) / vmax) * vh;
-        svg.innerHTML += '<line x1="'+mid+'" x2="'+mid+'" y1="'+y(bar.h)+'" y2="'+y(bar.l)+'" stroke="'+col+'" stroke-width="1"/>';
-        svg.innerHTML += '<rect x="'+x+'" y="'+t+'" width="'+bw+'" height="'+Math.max(1.2, btm-t)+'" fill="'+col+'"/>';
-        svg.innerHTML += '<rect x="'+x+'" y="'+(164-volH)+'" width="'+bw+'" height="'+volH+'" fill="'+col+'" opacity=".28"/>';
+      var span = max - min || 1, w = 320, ch = 108, vh = 30, slot = w / cs.length, bw = Math.max(1.4, slot * .6);
+      function y(v) { return 4 + (1 - (v - min) / span) * ch; }
+      cs.forEach(function (c, i) {
+        var up = c.c >= c.o, x = i * slot + (slot - bw) / 2, mid = x + bw / 2, col = up ? "#5ec98a" : "#e06a72";
+        var t = y(Math.max(c.o, c.c)), b = y(Math.min(c.o, c.c)), vol = ((c.v || 0) / vmax) * vh;
+        svg.innerHTML += '<line x1="'+mid+'" x2="'+mid+'" y1="'+y(c.h)+'" y2="'+y(c.l)+'" stroke="'+col+'" stroke-width="1"/>';
+        svg.innerHTML += '<rect x="'+x+'" y="'+t+'" width="'+bw+'" height="'+Math.max(1.1, b-t)+'" fill="'+col+'"/>';
+        svg.innerHTML += '<rect x="'+x+'" y="'+(146-vol)+'" width="'+bw+'" height="'+vol+'" fill="'+col+'" opacity=".3"/>';
       });
     }
-    async function loadChart() {
-      var c = await jget("/api/candles?instId=" + encodeURIComponent(inst) + "&bar=" + encodeURIComponent(bar));
-      if (c && c.ok) draw(c.candles);
+    function rows(list, empty) {
+      if (!list || !list.length) return '<div class="dim" style="padding:8px 0">'+(empty||"없음")+"</div>";
+      return list.map(function (r) {
+        return '<div class="row"><span class="'+(r.side==="buy"?"up":"dn")+'">'+(r.side||"")+" "+(r.instId||"")+'</span><span class="mono">'+(r.px||r.sz||"")+" · "+(r.state||r.sz||"")+"</span></div>";
+      }).join("");
     }
     async function loadTicker() {
       var j = await jget("/api/ticker?instId=" + encodeURIComponent(inst));
-      if (!j || !j.ok) return;
+      if (!j.ok) return;
       quote = j;
-      var last = n(j.last), open = n(j.open24h), pct = open ? ((last - open) / open) * 100 : 0;
+      var pct = n(j.open24h) ? ((n(j.last) - n(j.open24h)) / n(j.open24h)) * 100 : 0;
       $("sym").textContent = j.instId;
-      $("last").textContent = fmt(last);
+      $("last").textContent = fmt(j.last);
       $("last").className = "px " + (pct >= 0 ? "up" : "dn");
       $("chg").textContent = (pct >= 0 ? "+" : "") + pct.toFixed(2) + "%";
       $("chg").className = "k " + (pct >= 0 ? "up" : "dn");
-      $("rng").textContent = "고 " + fmt(j.high24h) + "  저 " + fmt(j.low24h);
+      $("rng").textContent = "고 " + fmt(j.high24h) + "  저 " + fmt(j.low24h) + "  거래대금 " + fmt(j.volCcy24h);
       $("bid").textContent = fmt(j.bid);
       $("ask").textContent = fmt(j.ask);
-      $("spr").textContent = (j.ask && j.bid) ? fmt(n(j.ask) - n(j.bid)) : "—";
-      $("vol").textContent = fmt(j.volCcy24h);
       preview();
+    }
+    async function loadChart() {
+      var c = await jget("/api/candles?instId=" + encodeURIComponent(inst) + "&bar=" + bar);
+      if (c.ok) draw(c.candles);
+    }
+    async function loadBook() {
+      var j = await jget("/api/book?instId=" + encodeURIComponent(inst));
+      if (!j.ok) return;
+      var asks = (j.asks || []).slice(0, 10).reverse();
+      var bids = (j.bids || []).slice(0, 10);
+      $("book").innerHTML = '<div class="asks">' + asks.map(function (x) { return "<div><span>"+fmt(x.px)+"</span><span>"+fmt(x.sz)+"</span></div>"; }).join("") + "</div>"
+        + '<div class="bids">' + bids.map(function (x) { return "<div><span>"+fmt(x.px)+"</span><span>"+fmt(x.sz)+"</span></div>"; }).join("") + "</div>";
+    }
+    async function loadTape() {
+      var j = await jget("/api/trades?instId=" + encodeURIComponent(inst));
+      if (!j.ok) return;
+      $("tape").innerHTML = (j.trades || []).map(function (t) {
+        return '<div class="'+(t.side==="buy"?"up":"dn")+'">'+fmt(t.px)+' <i>'+fmt(t.sz)+"</i></div>";
+      }).join("");
     }
     async function loadBal() {
       var j = await jget("/api/balance");
-      var el = $("bal");
-      if (j && j.ok) el.textContent = "USDT eq " + fmt(j.totalEq) + "\n" + (j.rows || []).map(function (r) { return r.ccy + "  " + fmt(r.avail); }).join("\n");
-      else el.textContent = (j && j.message) || "텔레그램에서 실잔고";
+      if (j.ok) {
+        bal = j;
+        $("eq").textContent = fmt(j.totalEq);
+        $("bal").textContent = (j.rows || []).map(function (r) { return r.ccy + "  " + fmt(r.avail); }).join("\n") || "0";
+      } else {
+        $("eq").textContent = "—";
+        $("bal").textContent = j.message || "텔레그램에서 실잔고";
+      }
+      preview();
+    }
+    async function loadOrders() {
       var o = await jget("/api/orders");
-      var box = $("olist"); box.innerHTML = "";
-      if (o && o.ok && o.orders) o.orders.forEach(function (row) {
-        var d = document.createElement("div");
-        d.innerHTML = "<span>" + row.side + " " + row.instId + " " + row.sz + "</span>";
-        var b = document.createElement("button"); b.textContent = "취소";
-        b.onclick = async function () { await jpost("/api/order-cancel", { confirm: true, ordId: row.ordId, instId: row.instId }); loadBal(); };
-        d.appendChild(b); box.appendChild(d);
-      });
+      var box = $("open");
+      if (!(o && o.ok && o.orders && o.orders.length)) { box.innerHTML = '<div class="dim" style="padding:8px 0">미체결 없음</div>'; }
+      else {
+        box.innerHTML = "";
+        o.orders.forEach(function (row) {
+          var d = document.createElement("div"); d.className = "row";
+          d.innerHTML = "<span>"+row.side+" "+row.instId+" "+row.sz+"</span>";
+          var b = document.createElement("button"); b.className = "btn ghost"; b.style.width = "auto"; b.style.height = "32px"; b.style.minHeight = "32px"; b.textContent = "취소";
+          b.onclick = async function () { await jpost("/api/order-cancel", { confirm: true, ordId: row.ordId, instId: row.instId }); loadOrders(); };
+          d.appendChild(b); box.appendChild(d);
+        });
+      }
+      var f = await jget("/api/fills");
+      $("fills").innerHTML = rows(f.fills, "체결 없음");
+      var h = await jget("/api/orders-history");
+      $("hist").innerHTML = rows(h.orders, "기록 없음");
     }
     function openSheet(mode, title, body, yes) {
-      sheetMode = mode; $("sheett").textContent = title; $("sheetb").textContent = body; $("sheety").textContent = yes;
-      $("sheet").className = "sheet on"; hap("medium");
+      sheetMode = mode; $("sheett").textContent = title; $("sheetb").textContent = body; $("sheety").textContent = yes; $("sheet").className = "sheet on"; hap("medium");
     }
     function closeSheet() { sheetMode = ""; $("sheet").className = "sheet"; }
     async function doSheet() {
       if (sheetMode === "order") {
-        var body = { instId: inst, side: side, ordType: typ, sz: $("sz").value, confirm: true, tgtCcy: side === "buy" ? "quote_ccy" : "base_ccy" };
+        var body = { instId: inst, side: side, ordType: typ, sz: String($("sz").value), confirm: true, tgtCcy: side === "buy" ? "quote_ccy" : "base_ccy" };
         if (typ === "limit") body.px = $("lpx").value;
         var j = await jpost("/api/order", body);
-        $("tkstat").textContent = j && j.ok ? ("체결 " + (j.ordId || "")) : ((j && j.message) || "거절");
-        $("omsg").textContent = j && j.message || (j && j.ok ? "전송" : "");
-        closeSheet(); loadBal();
+        $("omsg").textContent = j.ok ? ("전송 " + (j.ordId || "")) : (j.message || "거절");
+        closeSheet(); loadBal(); loadOrders();
       } else if (sheetMode === "arm") {
         var j = await jpost("/api/auto", { armed: true, confirm: true, maxUsdt: n($("amax").value), maxDailyUsdt: n($("aday").value), pairs: [inst], model: "gemini" });
-        $("amode").textContent = j && j.ok && j.config && j.config.armed ? "무장 " + inst : ((j && j.message) || "미연결");
+        $("amode").textContent = j.ok && j.config && j.config.armed ? "무장 " + inst : (j.message || "미연결");
         closeSheet();
       }
     }
-    $("go").onclick = function () {
-      if (!init) { $("omsg").textContent = "텔레그램에서만 실주문"; return; }
-      openSheet("order", "실주문", $("prev").textContent, side === "buy" ? "매수" : "매도");
-    };
-    $("sheetx").onclick = closeSheet;
-    $("sheety").onclick = doSheet;
+    $("go").onclick = function () { if (!init) { $("omsg").textContent = "텔레그램에서만 실주문"; return; } openSheet("order", "실주문", $("prev").textContent, side === "buy" ? "매수" : "매도"); };
+    $("sheetx").onclick = closeSheet; $("sheety").onclick = doSheet;
     $("kill").onclick = async function () { await jpost("/api/auto", { armed: false, confirm: true }); $("amode").textContent = "해제"; };
-    $("arm").onclick = function () { openSheet("arm", "ARM " + inst, "지금 차트에 있는 페어만. 건당 " + $("amax").value + " USDT", "ARM"); };
-    async function loadAll() { await loadTicker(); await loadChart(); await loadBal(); }
+    $("arm").onclick = function () { openSheet("arm", "ARM " + inst, "건당 " + $("amax").value + " USDT · 이 마켓만", "ARM"); };
+    async function refresh() {
+      await loadTicker();
+      if (tab === "t-mkt") { await loadChart(); await loadBook(); await loadTape(); }
+      if (tab === "t-trd" || tab === "t-ast") await loadBal();
+      if (tab === "t-ord") await loadOrders();
+    }
     renderWatch();
-    loadAll();
-    setInterval(function () { loadTicker(); loadChart(); }, 8000);
-    setInterval(loadBal, 20000);
+    refresh();
+    setInterval(function () { loadTicker(); if (tab === "t-mkt") { loadChart(); loadBook(); loadTape(); } }, 4000);
+    setInterval(function () { if (tab === "t-ast" || tab === "t-trd") loadBal(); if (tab === "t-ord") loadOrders(); }, 12000);
   </script>
 </body>
 </html>
