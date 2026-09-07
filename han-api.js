@@ -91,6 +91,25 @@ async function readJson(req) {
   });
 }
 
+async function candles(req, res) {
+  const instId = /^(BTC|ETH|SOL)-USDT$/.test(String(req.query && req.query.instId || ""))
+    ? String(req.query.instId)
+    : "BTC-USDT";
+  try {
+    const r = await fetch(OKX + "/api/v5/market/candles?instId=" + encodeURIComponent(instId) + "&bar=1H&limit=48");
+    const body = await r.json();
+    const rows = body && Array.isArray(body.data) ? body.data : [];
+    const out = [];
+    for (let i = rows.length - 1; i >= 0; i--) {
+      const row = rows[i];
+      out.push({ o: num(row[1]), h: num(row[2]), l: num(row[3]), c: num(row[4]) });
+    }
+    res.json({ ok: true, instId: instId, candles: out });
+  } catch (e) {
+    res.status(502).json({ ok: false, message: "candles failed" });
+  }
+}
+
 async function health(_req, res) {
   res.json({
     ok: true,
@@ -224,6 +243,7 @@ async function cancel(req, res) {
 function attach(app) {
   app.use(function (req, res, next) {
     if (req.method === "GET" && req.path === "/health") return health(req, res);
+    if (req.method === "GET" && req.path === "/api/candles") return candles(req, res);
     if (req.method === "GET" && req.path === "/api/balance") return balance(req, res);
     if (req.method === "GET" && req.path === "/api/orders") return orders(req, res);
     if (req.method === "POST" && req.path === "/api/order") return order(req, res);

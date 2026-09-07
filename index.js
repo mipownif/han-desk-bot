@@ -1,6 +1,8 @@
 "use strict";
 
 const crypto = require("crypto");
+const fs = require("fs");
+const path = require("path");
 const express = require("express");
 
 const PORT = Number(process.env.PORT || 8080);
@@ -330,7 +332,9 @@ app.get("/health", (_req, res) => {
 });
 
 app.get("/app", (_req, res) => {
-  res.set("content-type", "text/html; charset=utf-8").send(APP_HTML);
+  const file = path.join(__dirname, "app.html");
+  const html = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : APP_HTML;
+  res.set("content-type", "text/html; charset=utf-8").send(html);
 });
 
 app.get("/api/ticker", async (req, res) => {

@@ -4,12 +4,12 @@ ROOT="${HOME}/quantum-server"
 mkdir -p "$ROOT"
 cd "$ROOT"
 BASE="https://raw.githubusercontent.com/mipownif/han-desk-bot/main"
-for f in package.json index.js han-api.js han-chat.js han-auto.js; do
+for f in package.json index.js app.html han-api.js han-chat.js han-auto.js; do
   curl -fsSL "$BASE/$f" -o "$f"
 done
 python3 - << 'PY'
 from pathlib import Path
-need = ["package.json", "index.js", "han-api.js", "han-chat.js", "han-auto.js"]
+need = ["package.json", "index.js", "app.html", "han-api.js", "han-chat.js", "han-auto.js"]
 for name in need:
     p = Path(name)
     if not p.is_file() or p.stat().st_size < 20:

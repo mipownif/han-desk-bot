@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>HAN</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" />
+  <style>
+    :root {
+      --bg:#090b0e; --fg:#eef1f5; --card:#12151a; --sunken:#0c0e12; --raised:#191d24;
+      --mute:#8a929e; --faint:#5c6470; --up:#5ec98a; --down:#e06a72; --line:#22272f;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--fg);
+      font: 15px/1.4 "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; }
+    body {
+      min-height: 100dvh;
+      background: radial-gradient(900px 420px at 50% -60px, rgba(210,216,224,.08), transparent 58%), var(--bg);
+      padding: max(.5rem, env(safe-area-inset-top)) 20px max(1.5rem, env(safe-area-inset-bottom));
+    }
+    .wrap { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+    header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+    .mark { height: 48px; color: var(--mute); }
+    .pill { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 4px 10px;
+      font-size: 11px; letter-spacing: .18em; text-transform: uppercase; background: var(--raised); color: var(--up); }
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--up); }
+    .who { font-size: 12px; color: var(--faint); text-align: right; margin-top: 6px; }
+    .tabs, .sides { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; background: var(--card); padding: 4px; border-radius: 12px; }
+    .sides { grid-template-columns: 1fr 1fr; }
+    .tabs button, .sides button, .chip { height: 44px; border: 0; border-radius: 8px; background: transparent; color: var(--mute); font: 500 14px inherit; }
+    .tabs button.on, .sides button.on, .chip.on { background: var(--raised); color: var(--fg); }
+    .card { background: var(--card); border-radius: 16px; padding: 20px; box-shadow: 0 0 0 1px rgba(255,255,255,.06); }
+    .k { font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--faint); }
+    .px { font: 500 34px/1.05 "IBM Plex Mono", ui-monospace, monospace; letter-spacing: -.03em; margin: 10px 0 6px; }
+    .up { color: var(--up); } .dn { color: var(--down); }
+    .dim { color: var(--mute); font-size: 13px; }
+    .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 14px; }
+    .cell { background: var(--sunken); border-radius: 8px; padding: 10px; }
+    .v { font: 13px "IBM Plex Mono", ui-monospace, monospace; margin-top: 4px; }
+    .lock { color: var(--mute); }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    input, select { width: 100%; height: 48px; border: 0; border-radius: 8px; background: var(--sunken); color: var(--fg);
+      font: 500 16px "IBM Plex Mono", ui-monospace, monospace; padding: 0 12px; outline: none; }
+    label.field { display: block; }
+    label.field span { display: block; font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--faint); margin: 0 0 6px; }
+    .btn { height: 48px; width: 100%; border: 0; border-radius: 8px; font: 500 15px inherit; background: #c5ccd6; color: var(--bg); }
+    .btn.ghost { background: var(--raised); color: var(--fg); }
+    .btn.kill { background: var(--down); color: var(--bg); }
+    .btn:disabled { opacity: .45; }
+    .gap { display: flex; flex-direction: column; gap: 12px; }
+    canvas, svg.chart { width: 100%; height: 80px; display: block; margin: 12px 0 4px; }
+    .cmds { display: grid; grid-template-columns: 120px 1fr; gap: 8px 12px; font-size: 13px; }
+    .cmds code { color: var(--fg); }
+    .cmds span { color: var(--mute); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <svg class="mark" viewBox="0 0 300 112" role="img" aria-label="HAN and only">
+        <defs><linearGradient id="m" x1="0.08" y1="0" x2="0.22" y2="1">
+          <stop offset="0%" stop-color="#f7f8fa"/><stop offset="38%" stop-color="#cfd5dd"/><stop offset="100%" stop-color="#8a939e"/>
+        </linearGradient></defs>
+        <g fill="url(#m)" transform="translate(16 0) skewX(-8)">
+          <path d="M18 8h22v30h18V8h22v72H58V50H40v30H18l-16 0 16-18Z"/>
+          <path fill-rule="evenodd" d="M128 8 192 80h-30l-12-26h-16L124 80H98L128 8Zm2 20 18 24h-24L130 28Z"/>
+          <path d="M206 8h24v20L268 8h26v72h-26V54L230 80h-24V8Z"/>
+        </g>
+        <text x="150" y="106" text-anchor="middle" fill="currentColor" style="font:500 10px 'IBM Plex Sans',sans-serif;letter-spacing:.72em">AND ONLY</text>
+      </svg>
+      <div>
+        <span class="pill" id="pill"><span class="dot"></span><span id="pillt">Idle</span></span>
+        <div class="who" id="who">Preview</div>
+      </div>
+    </header>
+    <div class="tabs" id="pairs">
+      <button data-id="BTC-USDT" class="on">BTC</button>
+      <button data-id="ETH-USDT">ETH</button>
+      <button data-id="SOL-USDT">SOL</button>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between"><span class="k">Ticker · 1H</span><span class="k" id="chg">—</span></div>
+      <div class="px" id="last">—</div>
+      <div class="dim" id="inst">BTC-USDT</div>
+      <svg class="chart" id="chart" viewBox="0 0 320 88" preserveAspectRatio="none"></svg>
+      <div class="grid3">
+        <div class="cell"><div class="k">Bid</div><div class="v" id="bid">—</div></div>
+        <div class="cell"><div class="k">Ask</div><div class="v" id="ask">—</div></div>
+        <div class="cell"><div class="k">Spread</div><div class="v" id="spr">—</div></div>
+      </div>
+    </div>
+    <div class="card" id="balbox"><div class="k">Balance</div><div class="lock" id="bal" style="margin-top:10px">Open inside Telegram</div></div>
+    <div class="card gap">
+      <div style="display:flex;justify-content:space-between"><span class="k">Ticket</span><span class="k" id="tkstat">Manual</span></div>
+      <div class="sides" id="side"><button data-s="buy" class="on">Buy</button><button data-s="sell">Sell</button></div>
+      <div class="sides" id="typ"><button data-t="market" class="on">Market</button><button data-t="limit">Limit</button></div>
+      <label class="field"><span>Size</span><input id="sz" value="25" inputmode="decimal" /></label>
+      <label class="field" id="pxrow" style="display:none"><span>Limit px</span><input id="lpx" inputmode="decimal" /></label>
+      <div class="dim" id="prev">—</div>
+      <button class="btn" id="go">Review order</button>
+      <div id="olist" class="dim"></div>
+    </div>
+    <div class="card gap">
+      <div style="display:flex;justify-content:space-between"><span class="k">Auto</span><span class="k" id="amode">Disarmed</span></div>
+      <button class="btn kill" id="kill">Kill switch</button>
+      <div class="row2">
+        <label class="field"><span>Max USDT</span><input id="amax" value="25" inputmode="numeric" /></label>
+        <label class="field"><span>Daily cap</span><input id="aday" value="200" inputmode="numeric" /></label>
+        <label class="field"><span>Interval s</span><input id="aint" value="60" inputmode="numeric" /></label>
+        <label class="field"><span>Min conf %</span><input id="aconf" value="70" inputmode="numeric" /></label>
+      </div>
+      <div class="dim" id="agate">Gate idle until ARM.</div>
+      <button class="btn ghost" id="arm">Review ARM</button>
+    </div>
+    <div class="card gap">
+      <div class="k">Wallets · watch only</div>
+      <div class="dim">Addresses only. Seeds stay off this host.</div>
+      <input id="wlab" placeholder="Label" />
+      <input id="waddr" placeholder="0x…" />
+      <button class="btn ghost" id="wadd">Add watch</button>
+      <div id="wlist" class="dim"></div>
+    </div>
+    <div class="card">
+      <div class="k" style="margin-bottom:12px">Bot</div>
+      <div class="cmds">
+        <code>/app</code><span>This desk</span>
+        <code>ticker BTC</code><span>Spot last</span>
+        <code>balance</code><span>OKX equity</span>
+        <code>/kill</code><span>Disarm auto</span>
+      </div>
+    </div>
+  </div>
+  <script>
+    var tg = window.Telegram && window.Telegram.WebApp;
+    var init = (tg && tg.initData) || "";
+    var inst = "BTC-USDT";
+    var side = "buy";
+    var typ = "market";
+    var auto = { armed: false };
+    if (tg) { tg.ready(); tg.expand(); tg.setBackgroundColor && tg.setBackgroundColor("#090b0e"); tg.setHeaderColor && tg.setHeaderColor("#090b0e"); }
+    document.getElementById("who").textContent = init ? ((tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.first_name) || "Telegram") : "Preview";
+    function $(id) { return document.getElementById(id); }
+    function hdr() { return init ? { "X-Telegram-Init-Data": init, "content-type": "application/json" } : { "content-type": "application/json" }; }
+    function n(v) { var x = Number(v); return Number.isFinite(x) ? x : 0; }
+    function fmt(v) { v = n(v); if (!v) return "—"; return v >= 100 ? v.toLocaleString(undefined,{maximumFractionDigits:1}) : v.toFixed(4); }
+    async function jget(url) { var r = await fetch(url, { headers: hdr() }); try { return await r.json(); } catch(e) { return { ok:false }; } }
+    async function jpost(url, body) { var r = await fetch(url, { method: "POST", headers: hdr(), body: JSON.stringify(body) }); try { return await r.json(); } catch(e) { return { ok:false }; } }
+    function setOn(root, attr, val) {
+      [].forEach.call(root.querySelectorAll("button"), function (b) { b.className = b.getAttribute(attr) === val ? "on" : ""; });
+    }
+    $("pairs").onclick = function (e) {
+      var b = e.target.closest("button"); if (!b) return;
+      inst = b.getAttribute("data-id"); setOn($("pairs"), "data-id", inst); loadAll();
+    };
+    $("side").onclick = function (e) { var b = e.target.closest("button"); if (!b) return; side = b.getAttribute("data-s"); setOn($("side"), "data-s", side); preview(); };
+    $("typ").onclick = function (e) { var b = e.target.closest("button"); if (!b) return; typ = b.getAttribute("data-t"); setOn($("typ"), "data-t", typ); $("pxrow").style.display = typ === "limit" ? "" : "none"; preview(); };
+    function preview() {
+      var sz = $("sz").value || "0";
+      $("prev").textContent = (typ === "market" ? "Market " : "Limit ") + side + " " + sz + (side === "buy" ? " USDT " : " ") + inst;
+    }
+    $("sz").oninput = preview; preview();
+    function draw(cs) {
+      var svg = $("chart"); svg.innerHTML = "";
+      if (!cs || !cs.length) return;
+      var min = Math.min.apply(null, cs.map(function (b) { return b.l; }));
+      var max = Math.max.apply(null, cs.map(function (b) { return b.h; }));
+      var span = max - min || 1, w = 320, h = 88, pad = 4, inner = h - 8, slot = w / cs.length, bw = Math.max(2.4, slot * .55);
+      function y(v) { return pad + (1 - (v - min) / span) * inner; }
+      cs.forEach(function (bar, i) {
+        var up = bar.c >= bar.o, x = i * slot + (slot - bw) / 2, mid = x + bw / 2;
+        var top = y(Math.max(bar.o, bar.c)), bot = y(Math.min(bar.o, bar.c));
+        var col = up ? "#5ec98a" : "#e06a72";
+        svg.innerHTML += '<line x1="'+mid+'" x2="'+mid+'" y1="'+y(bar.h)+'" y2="'+y(bar.l)+'" stroke="'+col+'" stroke-width="1"/>';
+        svg.innerHTML += '<rect x="'+x+'" y="'+top+'" width="'+bw+'" height="'+Math.max(1.2, bot-top)+'" fill="'+col+'"/>';
+      });
+    }
+    async function loadTicker() {
+      var j = await jget("/api/ticker?instId=" + encodeURIComponent(inst));
+      if (!j || !j.ok) return;
+      var last = n(j.last), open = n(j.open24h), pct = open ? ((last - open) / open) * 100 : 0;
+      $("last").textContent = fmt(last);
+      $("last").className = "px " + (pct >= 0 ? "up" : "dn");
+      $("inst").textContent = j.instId;
+      $("bid").textContent = fmt(j.bid);
+      $("ask").textContent = fmt(j.ask);
+      $("spr").textContent = (j.ask && j.bid) ? (n(j.ask) - n(j.bid)).toFixed(2) : "—";
+      $("chg").textContent = (pct >= 0 ? "+" : "") + pct.toFixed(2) + "%";
+      $("chg").className = "k " + (pct >= 0 ? "up" : "dn");
+      $("pillt").textContent = auto.armed ? "Auto" : "Live";
+      $("pill").style.color = auto.armed ? "var(--down)" : "var(--up)";
+      var c = await jget("/api/candles?instId=" + encodeURIComponent(inst));
+      if (c && c.ok) draw(c.candles);
+    }
+    async function loadBal() {
+      var j = await jget("/api/balance");
+      var el = $("bal");
+      if (j && j.ok) {
+        el.className = "v";
+        el.style.whiteSpace = "pre";
+        el.textContent = "USDT eq " + fmt(j.totalEq) + "\n" + (j.rows || []).map(function (r) { return r.ccy + "  " + fmt(r.avail); }).join("\n");
+      } else {
+        el.className = "lock";
+        el.textContent = (j && j.message) || "Open inside Telegram";
+      }
+      var o = await jget("/api/orders");
+      $("olist").textContent = (o && o.ok && o.orders && o.orders.length) ? o.orders.map(function (x) { return x.side + " " + x.instId + " " + x.sz; }).join("\n") : "";
+    }
+    $("go").onclick = async function () {
+      if ($("go").dataset.mode !== "confirm") {
+        $("go").dataset.mode = "confirm";
+        $("go").textContent = "Confirm live " + side;
+        $("go").className = "btn kill";
+        return;
+      }
+      var body = { instId: inst, side: side, ordType: typ, sz: $("sz").value, confirm: true };
+      if (typ === "limit") body.px = $("lpx").value;
+      if (side === "buy") body.tgtCcy = "quote_ccy";
+      var j = await jpost("/api/order", body);
+      $("tkstat").textContent = j && j.ok ? ("Filled " + (j.ordId || "")) : ((j && j.message) || "rejected");
+      $("go").dataset.mode = ""; $("go").textContent = "Review order"; $("go").className = "btn";
+      loadBal();
+    };
+    $("kill").onclick = async function () {
+      auto.armed = false; $("amode").textContent = "Disarmed";
+      await jpost("/api/auto", { armed: false, confirm: true, maxUsdt: n($("amax").value), maxDailyUsdt: n($("aday").value) });
+    };
+    $("arm").onclick = async function () {
+      if ($("arm").dataset.mode !== "confirm") {
+        $("arm").dataset.mode = "confirm";
+        $("arm").textContent = "ARM live";
+        $("arm").className = "btn kill";
+        $("agate").textContent = "실계좌. 게이트 통과 시 확인 없이 시장가. Kill만 멈춤.";
+        return;
+      }
+      var j = await jpost("/api/auto", {
+        armed: true, confirm: true, maxUsdt: n($("amax").value), maxDailyUsdt: n($("aday").value),
+        intervalSec: n($("aint").value), minConf: n($("aconf").value) / 100, pairs: [inst], model: "gemini"
+      });
+      auto.armed = !!(j && j.ok && j.config && j.config.armed);
+      $("amode").textContent = auto.armed ? "Armed live" : ((j && j.message) || "not attached");
+      $("arm").dataset.mode = ""; $("arm").textContent = "Review ARM"; $("arm").className = "btn ghost";
+    };
+    var WKEY = "han-watch-wallets";
+    function wallets() { try { return JSON.parse(localStorage.getItem(WKEY) || "[]"); } catch(e) { return []; } }
+    function renderW() {
+      var rows = wallets();
+      $("wlist").innerHTML = rows.map(function (r) { return "<div>"+r.label+" · "+r.address+"</div>"; }).join("") || "No watched addresses.";
+    }
+    $("wadd").onclick = function () {
+      var a = $("waddr").value.trim(), l = $("wlab").value.trim() || "wallet";
+      if (!/^0x[a-fA-F0-9]{40}$/.test(a)) return;
+      var rows = wallets(); rows.push({ label: l, address: a }); localStorage.setItem(WKEY, JSON.stringify(rows));
+      $("waddr").value = ""; $("wlab").value = ""; renderW();
+    };
+    renderW();
+    async function loadAll() { await loadTicker(); await loadBal(); }
+    loadAll();
+    setInterval(loadTicker, 8000);
+    setInterval(loadBal, 20000);
+  </script>
+</body>
+</html>
