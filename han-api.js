@@ -17,6 +17,10 @@ function num(v, d) {
   return Number.isFinite(n) ? n : d || 0;
 }
 
+function instOk(id) {
+  return /^[A-Z0-9]{2,16}-USDT$/.test(String(id || ""));
+}
+
 function allowed(id) {
   return String(id) === ALLOWED;
 }
@@ -91,20 +95,80 @@ async function readJson(req) {
   });
 }
 
-async function candles(req, res) {
-  const instId = /^(BTC|ETH|SOL)-USDT$/.test(String(req.query && req.query.instId || ""))
-    ? String(req.query.instId)
-    : "BTC-USDT";
+let instCache = { at: 0, rows: [] };
+
+async function loadInstruments() {
+  if (instCache.rows.length && Date.now() - instCache.at < 600000) return instCache.rows;
+  const r = await fetch(OKX + "/api/v5/public/instruments?instType=SPOT");
+  const body = await r.json();
+  const rows = body && Array.isArray(body.data) ? body.data : [];
+  const out = [];
+  for (let i = 0; i < rows.length; i++) {
+    const it = rows[i];
+    const id = String(it.instId || "");
+    if (!instOk(id) || it.state !== "live") continue;
+    out.push({ instId: id, base: String(it.baseCcy || id.split("-")[0]), quote: "USDT" });
+  }
+  instCache = { at: Date.now(), rows: out };
+  return out;
+}
+
+async function instruments(req, res) {
+  const q = String((req.query && req.query.q) || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
   try {
-    const r = await fetch(OKX + "/api/v5/market/candles?instId=" + encodeURIComponent(instId) + "&bar=1H&limit=48");
+    const rows = await loadInstruments();
+    const hit = q
+      ? rows.filter(function (it) { return it.instId.indexOf(q) === 0 || it.base.indexOf(q) === 0; }).slice(0, 30)
+      : rows.filter(function (it) { return /^(BTC|ETH|SOL|XRP|DOGE|ADA)-USDT$/.test(it.instId); });
+    res.json({ ok: true, q: q, rows: hit });
+  } catch (e) {
+    res.status(502).json({ ok: false, message: "instruments failed" });
+  }
+}
+
+async function ticker(req, res) {
+  const instId = instOk(req.query && req.query.instId) ? String(req.query.instId) : "BTC-USDT";
+  try {
+    const r = await fetch(OKX + "/api/v5/market/ticker?instId=" + encodeURIComponent(instId));
+    const body = await r.json();
+    const row = body && body.data && body.data[0];
+    if (!row) { res.status(502).json({ ok: false, message: "ticker empty" }); return; }
+    res.json({
+      ok: true,
+      instId: row.instId || instId,
+      last: num(row.last),
+      bid: num(row.bidPx),
+      ask: num(row.askPx),
+      bidSz: num(row.bidSz),
+      askSz: num(row.askSz),
+      open24h: num(row.open24h),
+      high24h: num(row.high24h),
+      low24h: num(row.low24h),
+      volCcy24h: num(row.volCcy24h),
+      ts: num(row.ts),
+    });
+  } catch (e) {
+    res.status(502).json({ ok: false, message: "ticker failed" });
+  }
+}
+
+async function candles(req, res) {
+  const instId = instOk(req.query && req.query.instId) ? String(req.query.instId) : "BTC-USDT";
+  const bar = /^(1m|5m|15m|1H|4H|1D)$/.test(String((req.query && req.query.bar) || ""))
+    ? String(req.query.bar)
+    : "15m";
+  try {
+    const r = await fetch(
+      OKX + "/api/v5/market/candles?instId=" + encodeURIComponent(instId) + "&bar=" + encodeURIComponent(bar) + "&limit=96",
+    );
     const body = await r.json();
     const rows = body && Array.isArray(body.data) ? body.data : [];
     const out = [];
     for (let i = rows.length - 1; i >= 0; i--) {
       const row = rows[i];
-      out.push({ o: num(row[1]), h: num(row[2]), l: num(row[3]), c: num(row[4]) });
+      out.push({ t: num(row[0]), o: num(row[1]), h: num(row[2]), l: num(row[3]), c: num(row[4]), v: num(row[5]) });
     }
-    res.json({ ok: true, instId: instId, candles: out });
+    res.json({ ok: true, instId: instId, bar: bar, candles: out });
   } catch (e) {
     res.status(502).json({ ok: false, message: "candles failed" });
   }
@@ -178,7 +242,7 @@ async function place(b) {
   const ordType = String(b.ordType || "market");
   const sz = String(b.sz || "");
   const px = b.px == null ? "" : String(b.px);
-  if (!/^(BTC|ETH|SOL)-USDT$/.test(instId) || (side !== "buy" && side !== "sell") || !(num(sz) > 0)) {
+  if (!instOk(instId) || (side !== "buy" && side !== "sell") || !(num(sz) > 0)) {
     return { ok: false, reason: "rejected", message: "Need instId, side, sz." };
   }
   if (side === "buy" && num(sz) > MAX_USDT) {
@@ -243,6 +307,8 @@ async function cancel(req, res) {
 function attach(app) {
   app.use(function (req, res, next) {
     if (req.method === "GET" && req.path === "/health") return health(req, res);
+    if (req.method === "GET" && req.path === "/api/instruments") return instruments(req, res);
+    if (req.method === "GET" && req.path === "/api/ticker") return ticker(req, res);
     if (req.method === "GET" && req.path === "/api/candles") return candles(req, res);
     if (req.method === "GET" && req.path === "/api/balance") return balance(req, res);
     if (req.method === "GET" && req.path === "/api/orders") return orders(req, res);
