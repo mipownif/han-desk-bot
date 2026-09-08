@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os
 import pathlib
+import re
 import subprocess
 import sys
 import urllib.request
@@ -19,19 +20,11 @@ FILES = [
 HOST = "https://quantum-server-402813283609.europe-north2.run.app"
 PROJECT = "future-shuttle-507619-f7"
 SA = "serviceAccount:402813283609-compute@developer.gserviceaccount.com"
-SECRETS_OKX = (
-    "TELEGRAM_BOT_TOKEN=Telegram_HAN_thX_bot_API:latest,"
-    "OKX_API_KEY=OKX_API_key:latest,"
-    "OKX_API_SECRET=OKX_Secret_key:latest,"
-    "OKX_API_PASSPHRASE=OKX_PassPhrase:latest"
-)
-SECRETS_ALL = SECRETS_OKX + ",GEMINI_API_KEY=Gemini_API_key:latest"
 
 
 def fetch(name):
     dest = ROOT / name
-    url = BASE + name
-    urllib.request.urlretrieve(url, dest)
+    urllib.request.urlretrieve(BASE + name, dest)
     size = dest.stat().st_size
     if size < 20:
         raise SystemExit("tiny file %s (%s bytes)" % (name, size))
@@ -41,6 +34,56 @@ def fetch(name):
 def run(cmd, check=True):
     print("+", " ".join(cmd))
     return subprocess.run(cmd, cwd=str(ROOT), check=check)
+
+
+def secrets_list():
+    r = subprocess.run(
+        ["gcloud", "secrets", "list", "--project", PROJECT, "--format=value(name)"],
+        capture_output=True, text=True,
+    )
+    return [n.strip() for n in (r.stdout or "").splitlines() if n.strip()]
+
+
+def grant(secret):
+    run([
+        "gcloud", "secrets", "add-iam-policy-binding", secret,
+        "--project", PROJECT,
+        "--member", SA,
+        "--role", "roles/secretmanager.secretAccessor",
+    ], check=False)
+
+
+def secret_map():
+    names = secrets_list()
+    print("secrets", len(names))
+    pairs = [
+        ("TELEGRAM_BOT_TOKEN", "Telegram_HAN_thX_bot_API"),
+        ("OKX_API_KEY", "OKX_API_key"),
+        ("OKX_API_SECRET", "OKX_Secret_key"),
+        ("OKX_API_PASSPHRASE", "OKX_PassPhrase"),
+        ("GEMINI_API_KEY", "Gemini_API_key"),
+        ("ALCHEMY_API_KEY", "Alchemy_API_key"),
+        ("BLOCKSCOUT_API_KEY", "Blockscout_API_key"),
+    ]
+    out = []
+    have = set(names)
+    for env, secret in pairs:
+        if secret in have:
+            grant(secret)
+            out.append("%s=%s:latest" % (env, secret))
+    n = 0
+    for secret in names:
+        u = secret.upper().replace("-", "_")
+        if u.startswith("LET"):
+            continue
+        if not re.search(r"WAL|WALLET|ADDR", u):
+            continue
+        if re.search(r"SECRET|PASS|PRIVATE|MNEMONIC|SEED|KEY$", u) and "ADDR" not in u:
+            continue
+        n += 1
+        grant(secret)
+        out.append("WAL_%d=%s:latest" % (n, secret))
+    return ",".join(out)
 
 
 def deploy(secrets):
@@ -75,18 +118,11 @@ def main():
     text = (ROOT / "index.js").read_text()
     if 'require("./han-api").attach(app);' not in text:
         raise SystemExit("index.js missing han-api attach")
-    run([
-        "gcloud", "secrets", "add-iam-policy-binding", "Gemini_API_key",
-        "--project", PROJECT,
-        "--member", SA,
-        "--role", "roles/secretmanager.secretAccessor",
-    ], check=False)
-    result = deploy(SECRETS_ALL)
+    secrets = secret_map()
+    print("bind", secrets)
+    result = deploy(secrets)
     if result.returncode != 0:
-        print("Gemini bind failed or deploy failed. Retry without GEMINI_API_KEY.")
-        result = deploy(SECRETS_OKX)
-        if result.returncode != 0:
-            raise SystemExit("deploy failed")
+        raise SystemExit("deploy failed")
     verify()
 
 

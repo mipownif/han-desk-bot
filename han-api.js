@@ -183,6 +183,7 @@ async function health(_req, res) {
     trade: true,
     auto: true,
     ai: true,
+    wallets: walletsFromEnv().length,
   });
 }
 
@@ -385,6 +386,77 @@ async function fills(req, res) {
   }
 }
 
+function looksKey(v) {
+  const s = String(v || "").trim();
+  if (!s) return true;
+  if (/^(0x)?[0-9a-fA-F]{64}$/.test(s)) return true;
+  if (s.split(/\s+/).length >= 12) return true;
+  return false;
+}
+
+function looksAddr(v) {
+  return /^0x[a-fA-F0-9]{40}$/.test(String(v || "").trim());
+}
+
+function walletsFromEnv() {
+  const out = [];
+  const keys = Object.keys(process.env).sort();
+  for (let i = 0; i < keys.length; i++) {
+    const name = keys[i];
+    if (!/WAL|WALLET|ADDR/i.test(name)) continue;
+    if (/LET|SECRET|PASSPHRASE|PRIVATE|MNEMONIC|SEED/i.test(name)) continue;
+    const raw = process.env[name];
+    if (looksKey(raw)) continue;
+    let items = [];
+    try {
+      const j = JSON.parse(raw);
+      if (Array.isArray(j)) items = j;
+      else if (j && j.address) items = [j];
+    } catch (e) {
+      items = String(raw).split(/[\s,;]+/);
+    }
+    for (let k = 0; k < items.length; k++) {
+      const it = items[k];
+      const addr = typeof it === "string" ? it : (it && it.address);
+      if (!looksAddr(addr)) continue;
+      out.push({
+        id: name + "-" + k,
+        label: (it && it.label) || name,
+        chain: (it && it.chain) || "eth",
+        address: String(addr).trim(),
+      });
+    }
+  }
+  return out;
+}
+
+async function ethBal(address) {
+  const key = process.env.ALCHEMY_API_KEY || "";
+  if (!key) return null;
+  const r = await fetch("https://eth-mainnet.g.alchemy.com/v2/" + encodeURIComponent(key), {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_getBalance", params: [address, "latest"] }),
+  });
+  const body = await r.json();
+  const hex = body && body.result;
+  if (!hex) return null;
+  return Number(BigInt(hex)) / 1e18;
+}
+
+async function wallets(req, res) {
+  if (!gate(req, res)) return;
+  const rows = walletsFromEnv();
+  const out = [];
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    let eq = null;
+    try { eq = await ethBal(row.address); } catch (e) { eq = null; }
+    out.push({ label: row.label, chain: row.chain, address: row.address, eth: eq });
+  }
+  res.json({ ok: true, rows: out, alchemy: Boolean(process.env.ALCHEMY_API_KEY) });
+}
+
 function attach(app) {
   app.use(function (req, res, next) {
     if (req.method === "GET" && req.path === "/health") return health(req, res);
@@ -397,6 +469,7 @@ function attach(app) {
     if (req.method === "GET" && req.path === "/api/orders") return orders(req, res);
     if (req.method === "GET" && req.path === "/api/orders-history") return history(req, res);
     if (req.method === "GET" && req.path === "/api/fills") return fills(req, res);
+    if (req.method === "GET" && req.path === "/api/wallets") return wallets(req, res);
     if (req.method === "POST" && req.path === "/api/order") return order(req, res);
     if (req.method === "POST" && req.path === "/api/order-cancel") return cancel(req, res);
     next();
