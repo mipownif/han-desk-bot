@@ -399,12 +399,15 @@ app.use((_req, res) => {
 
 async function bootTelegram() {
   if (!TELEGRAM_BOT_TOKEN) return;
-  await tg("setWebhook", { url: `${HOST}/telegram`, allowed_updates: ["message"] });
+  await tg("setWebhook", { url: `${HOST}/telegram`, allowed_updates: ["message", "callback_query"] });
   await tg("setMyCommands", {
     commands: [
       { command: "app", description: "Open HAN desk" },
       { command: "ticker", description: "Spot last / bid / ask" },
       { command: "balance", description: "OKX live equity" },
+      { command: "arm", description: "ARM auto (confirm)" },
+      { command: "disarm", description: "Disarm auto" },
+      { command: "kill", description: "Kill auto now" },
       { command: "id", description: "Show chat_id" },
     ],
   });

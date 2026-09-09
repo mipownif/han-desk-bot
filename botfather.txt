@@ -1,0 +1,16 @@
+Paste in BotFather. Do not delete the webhook.
+
+/setcommands
+app - Open HAN desk
+ticker - Spot last / bid / ask
+balance - OKX live equity
+arm - ARM auto (confirm)
+disarm - Disarm auto
+kill - Kill auto now
+id - Show chat_id
+
+/setmenubutton
+HAN
+https://quantum-server-402813283609.europe-north2.run.app/app
+
+Webhook stays POST /telegram. Do not /deletewebhook.

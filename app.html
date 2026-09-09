@@ -147,6 +147,7 @@
       <div class="card">
         <div class="k">시크릿 지갑 · 워치</div>
         <div class="dim" style="margin:6px 0 8px">주소만 표시. 키/시드는 주문에 쓰지 않음. 체결은 OKX API.</div>
+        <button class="btn ghost" id="walref" style="margin-bottom:8px">지갑 새로고침</button>
         <div id="wals" class="dim">불러오는 중</div>
       </div>
       <div class="card" style="display:flex;flex-direction:column;gap:8px">
@@ -183,6 +184,7 @@
     var inst = "BTC-USDT", bar = "15m", side = "buy", typ = "market", pane = "book";
     var quote = null, bal = null, tab = "t-mkt", sheetMode = "";
     var WKEY = "han-watch";
+    var OPENKEY = "han-opened";
     if (tg) {
       tg.ready(); tg.expand();
       tg.setBackgroundColor && tg.setBackgroundColor("#090b0e");
@@ -190,6 +192,7 @@
       tg.disableVerticalSwipes && tg.disableVerticalSwipes();
     }
     function $(id) { return document.getElementById(id); }
+    function esc(s) { s = String(s); s = s.split("&").join("&amp;"); s = s.split("<").join("&lt;"); s = s.split(">").join("&gt;"); s = s.split("\"").join("&quot;"); s = s.split("'").join("&#39;"); return s; }
     function hap(k) { try { tg && tg.HapticFeedback && tg.HapticFeedback.impactOccurred(k || "light"); } catch (e) {} }
     function hdr() { var h = { "content-type": "application/json" }; if (init) h["X-Telegram-Init-Data"] = init; return h; }
     function n(v) { var x = Number(v); return Number.isFinite(x) ? x : 0; }
@@ -198,8 +201,13 @@
     async function jpost(u, b) { var r = await fetch(u, { method: "POST", headers: hdr(), body: JSON.stringify(b) }); try { return await r.json(); } catch (e) { return { ok:false }; } }
     function setOn(el, a, v) { [].forEach.call(el.querySelectorAll("button"), function (b) { b.className = b.getAttribute(a) === v ? "on" : ""; }); }
     function watch() { try { return JSON.parse(localStorage.getItem(WKEY) || '["BTC-USDT","ETH-USDT","SOL-USDT"]'); } catch (e) { return ["BTC-USDT"]; } }
+    function opened() { try { return JSON.parse(localStorage.getItem(OPENKEY) || "[]"); } catch (e) { return []; } }
+    function markOpened(id) {
+      var o = opened();
+      if (o.indexOf(id) < 0) { o.unshift(id); if (o.length > 14) o.pop(); localStorage.setItem(OPENKEY, JSON.stringify(o)); }
+    }
     function renderWatch() {
-      $("watch").innerHTML = watch().map(function (id) { return '<button data-id="'+id+'" class="'+(id===inst?"on":"")+'">'+id.replace("-USDT","")+"</button>"; }).join("");
+      $("watch").innerHTML = watch().map(function (id) { return '<button data-id="'+esc(id)+'" class="'+(id===inst?"on":"")+'">'+esc(id.replace("-USDT",""))+"</button>"; }).join("");
     }
     function pick(id) {
       inst = id;
@@ -217,11 +225,11 @@
         var j = await jget("/api/instruments?q=" + encodeURIComponent(q));
         $("hits").className = "hits on";
         $("hits").innerHTML = (j.rows || []).length
-          ? j.rows.map(function (it) { return '<button data-id="'+it.instId+'">'+it.instId+"<span>"+it.base+"</span></button>"; }).join("")
+          ? j.rows.map(function (it) { return '<button data-id="'+esc(it.instId)+'">'+esc(it.instId)+"<span>"+esc(it.base)+"</span></button>"; }).join("")
           : "<button disabled>없음</button>";
       }, 160);
     };
-    $("hits").onclick = function (e) { var b = e.target.closest("button"); if (b && b.getAttribute("data-id")) pick(b.getAttribute("data-id")); };
+    $("hits").onclick = function (e) { var b = e.target.closest("button"); if (b && b.getAttribute("data-id")) { markOpened(b.getAttribute("data-id")); pick(b.getAttribute("data-id")); } };
     document.querySelector(".nav").onclick = function (e) {
       var b = e.target.closest("button"); if (!b) return;
       tab = b.getAttribute("data-t");
@@ -340,9 +348,17 @@
       box.innerHTML = j.rows.map(function (r) {
         var short = r.address.slice(0, 6) + "…" + r.address.slice(-4);
         var eth = r.eth == null ? "" : (" · " + Number(r.eth).toFixed(4) + " ETH");
-        return '<div class="row"><span>'+r.label+' · '+short+eth+'</span></div>';
+        return '<div class="row"><span>'+esc(r.label)+" · "+esc(short)+esc(eth)+'</span><button class="btn ghost" data-copy="'+esc(r.address)+'" style="width:auto;min-height:32px;height:32px">복사</button></div>';
       }).join("");
     }
+    $("wals").onclick = function (e) {
+      var b = e.target.closest("[data-copy]");
+      if (!b) return;
+      var a = b.getAttribute("data-copy");
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(a);
+      b.textContent = "복사됨";
+      setTimeout(function () { b.textContent = "복사"; }, 1200);
+    };
     async function loadOrders() {
       var o = await jget("/api/orders");
       var box = $("open");
@@ -374,15 +390,21 @@
         $("omsg").textContent = j.ok ? ("전송 " + (j.ordId || "")) : (j.message || "거절");
         closeSheet(); loadBal(); loadOrders();
       } else if (sheetMode === "arm") {
-        var j = await jpost("/api/auto", { armed: true, confirm: true, maxUsdt: n($("amax").value), maxDailyUsdt: n($("aday").value), pairs: [inst], model: "gemini" });
-        $("amode").textContent = j.ok && j.config && j.config.armed ? "무장 " + inst : (j.message || "미연결");
+        var ps = opened();
+        var j = await jpost("/api/auto", { armed: true, confirm: true, maxUsdt: n($("amax").value), maxDailyUsdt: n($("aday").value), pairs: ps, model: "gemini" });
+        $("amode").textContent = j.ok && j.config && j.config.armed ? "무장 " + ps.join(" ") : (j.message || "미연결");
         closeSheet();
       }
     }
     $("go").onclick = function () { if (!init) { $("omsg").textContent = "텔레그램에서만 실주문"; return; } openSheet("order", "실주문", $("prev").textContent, side === "buy" ? "매수" : "매도"); };
     $("sheetx").onclick = closeSheet; $("sheety").onclick = doSheet;
     $("kill").onclick = async function () { await jpost("/api/auto", { armed: false, confirm: true }); $("amode").textContent = "해제"; };
-    $("arm").onclick = function () { openSheet("arm", "ARM " + inst, "건당 " + $("amax").value + " USDT · 이 마켓만", "ARM"); };
+    $("arm").onclick = function () {
+      var ps = opened();
+      if (!ps.length) { $("amode").textContent = "검색으로 마켓을 먼저 여세요"; return; }
+      openSheet("arm", "ARM", "건당 " + $("amax").value + " USDT · " + ps.join(" "), "ARM");
+    };
+    $("walref").onclick = function () { loadWallets(); };
     async function refresh() {
       await loadTicker();
       if (tab === "t-mkt") { await loadChart(); await loadBook(); await loadTape(); }

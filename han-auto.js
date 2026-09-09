@@ -5,7 +5,6 @@ const crypto = require("crypto");
 const TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
 const ALLOWED = String(process.env.ALLOWED_CHAT_ID || "8713335385");
 const GEMINI = process.env.GEMINI_API_KEY || "";
-const XAI = process.env.XAI_API_KEY || "";
 const OKX_KEY = process.env.OKX_API_KEY || "";
 const OKX_SEC = process.env.OKX_API_SECRET || "";
 const OKX_PASS = process.env.OKX_API_PASSPHRASE || "";
@@ -13,6 +12,8 @@ const OKX_FLAG = process.env.OKX_FLAG || "0";
 const HARD_MAX = Number(process.env.MAX_ORDER_USDT || 1000);
 const TG = "https://api.telegram.org/bot";
 const OKX = "https://www.okx.com";
+
+const pendingArm = new Map();
 
 const state = {
   armed: false,
@@ -22,12 +23,10 @@ const state = {
   maxDailyUsdt: 200,
   intervalSec: 60,
   cooldownSec: 120,
-  minConf: 0.7,
   maxSpreadBps: 8,
   allowBuy: true,
   allowSell: true,
-  pairs: ["BTC-USDT"],
-  model: "gemini",
+  pairs: [],
   dayKey: "",
   notionalToday: 0,
   tradesToday: 0,
@@ -63,18 +62,21 @@ function cfg() {
     maxDailyUsdt: state.maxDailyUsdt,
     intervalSec: state.intervalSec,
     cooldownSec: state.cooldownSec,
-    minConf: state.minConf,
     maxSpreadBps: state.maxSpreadBps,
     allowBuy: state.allowBuy,
     allowSell: state.allowSell,
-    pairs: state.pairs,
-    model: state.model,
+    pairs: state.pairs.slice(),
+    model: "gemini",
     dayKey: state.dayKey,
     notionalToday: state.notionalToday,
     tradesToday: state.tradesToday,
     lastFillAt: state.lastFillAt,
     lastSkip: state.lastSkip,
   };
+}
+
+function snapshot() {
+  return { config: cfg(), signal: state.signal };
 }
 
 function gateHttp(req, res) {
@@ -118,20 +120,12 @@ async function fetchQuote(instId) {
   return { instId: row.instId || instId, last: last, bid: bid, ask: ask, spreadBps: spreadBps };
 }
 
-async function askModel(snapshot) {
-  const prompt =
-    "OKX spot. JSON only {\"side\":\"buy|sell|flat\",\"instId\":\"BTC-USDT\",\"conf\":0-1,\"sz\":\"25\",\"reason\":\"...\"}. Conservative. Prefer flat. Data: " +
-    JSON.stringify(snapshot);
-  if (state.model === "grok" && XAI) {
-    const res = await fetch("https://api.x.ai/v1/chat/completions", {
-      method: "POST",
-      headers: { "content-type": "application/json", authorization: "Bearer " + XAI },
-      body: JSON.stringify({ model: "grok-3", messages: [{ role: "user", content: prompt }] }),
-    });
-    const body = await res.json();
-    return body && body.choices && body.choices[0] && body.choices[0].message && body.choices[0].message.content;
-  }
+async function askGemini(snapshot) {
   if (!GEMINI) return null;
+  const prompt =
+    "OKX spot. JSON only {\"side\":\"buy|sell|flat\",\"instId\":\"BTC-USDT\",\"sz\":\"25\",\"reason\":\"...\"}. " +
+    "No other keys. Conservative. Prefer flat. Data: " +
+    JSON.stringify(snapshot);
   const res = await fetch(
     "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" +
       encodeURIComponent(GEMINI),
@@ -161,15 +155,11 @@ function parseSignal(raw, fallbackInst) {
   try {
     const j = JSON.parse(raw.slice(start, end + 1));
     const side = j.side === "buy" || j.side === "sell" ? j.side : "flat";
-    return {
-      side: side,
-      instId: String(j.instId || fallbackInst),
-      conf: Number(j.conf) || 0,
-      sz: String(j.sz || state.maxUsdt),
-      reason: String(j.reason || ""),
-      model: state.model,
-      ts: Date.now(),
-    };
+    const instId = String(j.instId || fallbackInst);
+    const sz = String(j.sz || state.maxUsdt);
+    const reason = String(j.reason || "");
+    if (!instId) return null;
+    return { side: side, instId: instId, sz: sz, reason: reason, model: "gemini", ts: Date.now() };
   } catch (e) {
     return null;
   }
@@ -179,11 +169,11 @@ function decide(signal, quote, now) {
   rollDay();
   if (!state.armed) return { action: "idle", reason: "Disarmed" };
   if (state.halted) return { action: "idle", reason: state.haltReason || "Halted" };
+  if (!state.pairs.length) return { action: "skip", reason: "no searched pair" };
   if (!quote) return { action: "skip", reason: "No ticker" };
   if (quote.spreadBps > state.maxSpreadBps) return { action: "skip", reason: "wide spread" };
   if (!signal || signal.side === "flat") return { action: "skip", reason: "flat" };
   if (state.pairs.indexOf(signal.instId) < 0) return { action: "skip", reason: "pair" };
-  if (signal.conf < state.minConf) return { action: "skip", reason: "conf" };
   if (signal.side === "buy" && !state.allowBuy) return { action: "skip", reason: "buys off" };
   if (signal.side === "sell" && !state.allowSell) return { action: "skip", reason: "sells off" };
   if (state.lastFillAt && now - state.lastFillAt < state.cooldownSec * 1000) return { action: "skip", reason: "cooldown" };
@@ -223,9 +213,13 @@ async function place(decision) {
 
 async function tick() {
   const now = Date.now();
-  const instId = state.pairs[0] || "BTC-USDT";
+  const instId = state.pairs[0];
+  if (!instId) {
+    state.lastSkip = "no searched pair";
+    return;
+  }
   const quote = await fetchQuote(instId);
-  const raw = await askModel(quote);
+  const raw = await askGemini(quote);
   const signal = parseSignal(raw, instId);
   state.signal = signal;
   const d = decide(signal, quote, now);
@@ -272,6 +266,21 @@ function kill() {
   stopLoop();
 }
 
+function applyArm(pairs) {
+  const clean = [];
+  (pairs || []).forEach(function (id) {
+    const s = String(id || "").toUpperCase();
+    if (/^[A-Z0-9]{2,16}-USDT$/.test(s) && clean.indexOf(s) < 0) clean.push(s);
+  });
+  if (!clean.length) return { ok: false, message: "search-open a pair first" };
+  state.pairs = clean;
+  state.armed = true;
+  state.halted = false;
+  state.haltReason = null;
+  startLoop();
+  return { ok: true };
+}
+
 async function tg(method, payload) {
   if (!TOKEN) return;
   await fetch(TG + TOKEN + "/" + method, {
@@ -294,6 +303,14 @@ async function readJson(req) {
   });
 }
 
+function instFromText(text) {
+  const u = String(text || "").toUpperCase();
+  const m = u.match(/\b([A-Z0-9]{2,16})-USDT\b/) || u.match(/\b([A-Z0-9]{2,16})\b/);
+  if (!m) return "BTC-USDT";
+  const id = m[1].indexOf("-") >= 0 ? m[1] : m[1] + "-USDT";
+  return id;
+}
+
 function attach(app) {
   app.use(function (req, res, next) {
     if (req.method === "GET" && req.path === "/api/auto") {
@@ -312,17 +329,15 @@ function attach(app) {
         if (typeof b.maxDailyUsdt === "number") state.maxDailyUsdt = Math.max(1, b.maxDailyUsdt);
         if (b.intervalSec) state.intervalSec = Number(b.intervalSec);
         if (typeof b.cooldownSec === "number") state.cooldownSec = b.cooldownSec;
-        if (typeof b.minConf === "number") state.minConf = b.minConf;
         if (typeof b.maxSpreadBps === "number") state.maxSpreadBps = b.maxSpreadBps;
         if (typeof b.allowBuy === "boolean") state.allowBuy = b.allowBuy;
         if (typeof b.allowSell === "boolean") state.allowSell = b.allowSell;
-        if (Array.isArray(b.pairs) && b.pairs.length) state.pairs = b.pairs;
-        if (b.model === "grok" || b.model === "gemini") state.model = b.model;
         if (b.armed === true) {
-          state.armed = true;
-          state.halted = false;
-          state.haltReason = null;
-          startLoop();
+          const r = applyArm(b.pairs);
+          if (!r.ok) {
+            res.json({ ok: false, reason: "rejected", message: r.message });
+            return;
+          }
         } else {
           kill();
         }
@@ -334,7 +349,7 @@ function attach(app) {
       if (!gateHttp(req, res)) return;
       const instId = (req.query && req.query.instId) || state.pairs[0] || "BTC-USDT";
       fetchQuote(instId)
-        .then(askModel)
+        .then(askGemini)
         .then(function (raw) {
           const signal = parseSignal(raw, instId);
           state.signal = signal;
@@ -347,16 +362,63 @@ function attach(app) {
       return;
     }
     if (req.method === "POST" && req.path === "/telegram") {
+      const cq = req.body && req.body.callback_query;
+      if (cq) {
+        const from = cq.from && cq.from.id;
+        const data = String(cq.data || "");
+        if (allowed(from) && data.indexOf("han_arm_") === 0) {
+          Promise.resolve()
+            .then(function () {
+              return tg("answerCallbackQuery", { callback_query_id: cq.id });
+            })
+            .then(function () {
+              const chatId = cq.message && cq.message.chat && cq.message.chat.id;
+              const draft = pendingArm.get(String(from));
+              pendingArm.delete(String(from));
+              if (data === "han_arm_no") {
+                return tg("sendMessage", { chat_id: chatId, text: "ARM cancelled" });
+              }
+              if (data === "han_arm_yes" && draft && draft.instId) {
+                const r = applyArm([draft.instId]);
+                return tg("sendMessage", {
+                  chat_id: chatId,
+                  text: r.ok ? "ARMED " + draft.instId : r.message,
+                });
+              }
+            })
+            .catch(function () {});
+        }
+        return next();
+      }
       const msg = req.body && req.body.message;
-      const text = String((msg && msg.text) || "").trim().toLowerCase();
+      const text = String((msg && msg.text) || "").trim();
+      const lower = text.toLowerCase();
       const chatId = msg && msg.chat && msg.chat.id;
-      if (chatId && allowed(chatId) && (text === "/kill" || text === "kill")) {
-        kill();
-        tg("sendMessage", { chat_id: chatId, text: "auto killed" }).catch(function () {});
+      if (chatId && allowed(chatId)) {
+        if (lower === "/kill" || lower === "kill") {
+          kill();
+          tg("sendMessage", { chat_id: chatId, text: "auto killed" }).catch(function () {});
+        } else if (lower === "/disarm" || lower === "disarm") {
+          kill();
+          tg("sendMessage", { chat_id: chatId, text: "disarmed" }).catch(function () {});
+        } else if (lower === "/arm" || lower.startsWith("/arm ") || lower === "arm" || lower.startsWith("arm ")) {
+          const instId = instFromText(text);
+          pendingArm.set(String(chatId), { instId: instId });
+          tg("sendMessage", {
+            chat_id: chatId,
+            text: "ARM " + instId + " ? confirm:true required",
+            reply_markup: {
+              inline_keyboard: [[
+                { text: "ARM", callback_data: "han_arm_yes" },
+                { text: "Cancel", callback_data: "han_arm_no" },
+              ]],
+            },
+          }).catch(function () {});
+        }
       }
     }
     next();
   });
 }
 
-module.exports = { attach };
+module.exports = { attach, snapshot, kill };

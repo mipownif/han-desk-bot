@@ -83,6 +83,15 @@ def secret_map():
         n += 1
         grant(secret)
         out.append("WAL_%d=%s:latest" % (n, secret))
+    bound_env = set(x.split("=", 1)[0] for x in out)
+    for secret in names:
+        u = secret.upper().replace("-", "_")
+        if u.startswith("LET"):
+            continue
+        if "XAI" in u and "KEY" in u and "XAI_API_KEY" not in bound_env:
+            grant(secret)
+            out.append("XAI_API_KEY=%s:latest" % secret)
+            bound_env.add("XAI_API_KEY")
     return ",".join(out)
 
 
@@ -95,7 +104,7 @@ def deploy(secrets):
         "--allow-unauthenticated",
         "--clear-base-image",
         "--min-instances", "1",
-        "--set-env-vars", "ALLOWED_CHAT_ID=8713335385,OKX_FLAG=0,MAX_ORDER_USDT=1000",
+        "--set-env-vars", "ALLOWED_CHAT_ID=8713335385,OKX_FLAG=0,MAX_ORDER_USDT=1000,INDEX_WATCH=BTC-USDT,ETH-USDT,SOL-USDT",
         "--set-secrets", secrets,
     ]
     return run(cmd, check=False)
@@ -105,6 +114,7 @@ def verify():
     run(["curl", "-sS", HOST + "/health"], check=False)
     print()
     run(["curl", "-sS", "-o", "/dev/null", "-w", "/app %{http_code}\\n", HOST + "/app"], check=False)
+    run(["curl", "-sS", HOST + "/api/index"], check=False)
     run(["curl", "-sS", HOST + "/api/balance"], check=False)
     print()
 

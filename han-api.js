@@ -183,6 +183,7 @@ async function health(_req, res) {
     trade: true,
     auto: true,
     ai: true,
+    index: true,
     wallets: walletsFromEnv().length,
   });
 }
@@ -457,6 +458,78 @@ async function wallets(req, res) {
   res.json({ ok: true, rows: out, alchemy: Boolean(process.env.ALCHEMY_API_KEY) });
 }
 
+
+function parseIndexWatch() {
+  const raw = process.env.INDEX_WATCH || "BTC-USDT,ETH-USDT,SOL-USDT";
+  try {
+    const j = JSON.parse(raw);
+    if (Array.isArray(j)) return j.map(function (x) { return String(x).trim(); }).filter(Boolean).slice(0, 12);
+  } catch (e) {}
+  return String(raw).split(/[,;\s]+/).map(function (s) { return s.trim(); }).filter(Boolean).slice(0, 12);
+}
+
+function isCryptoId(id) {
+  return /^[A-Z0-9]{2,16}-USDT$/.test(String(id || ""));
+}
+
+async function cryptoIndex(id) {
+  const [tickRes, candleRes] = await Promise.all([
+    fetch(OKX + "/api/v5/market/ticker?instId=" + encodeURIComponent(id)),
+    fetch(OKX + "/api/v5/market/candles?instId=" + encodeURIComponent(id) + "&bar=1H&limit=24"),
+  ]);
+  const tickBody = await tickRes.json();
+  const candleBody = await candleRes.json();
+  const row = tickBody && tickBody.data && tickBody.data[0];
+  if (!row) return { id: id, kind: "crypto", last: 0, chgPct: 0, spark: [] };
+  const last = num(row.last);
+  const open = num(row.open24h);
+  const chgPct = open ? ((last - open) / open) * 100 : 0;
+  const spark = [];
+  const rows = candleBody && Array.isArray(candleBody.data) ? candleBody.data : [];
+  for (let i = rows.length - 1; i >= 0; i--) spark.push(num(rows[i][4]));
+  return { id: row.instId || id, kind: "crypto", last: last, chgPct: chgPct, spark: spark };
+}
+
+async function stockIndex(id) {
+  const url = "https://query1.finance.yahoo.com/v8/finance/chart/" + encodeURIComponent(id) + "?interval=1d&range=1mo";
+  const r = await fetch(url, { headers: { accept: "application/json", "user-agent": "HAN-index/1.0" } });
+  const body = await r.json();
+  const result = body && body.chart && body.chart.result && body.chart.result[0];
+  const meta = result && result.meta;
+  const quotes = result && result.indicators && result.indicators.quote && result.indicators.quote[0];
+  const closes = (quotes && quotes.close) || [];
+  const spark = closes.filter(function (v) { return typeof v === "number" && Number.isFinite(v); }).slice(-24);
+  const last = num(meta && (meta.regularMarketPrice || meta.previousClose), spark.length ? spark[spark.length - 1] : 0);
+  const prev = num(meta && meta.chartPreviousClose, spark.length > 1 ? spark[spark.length - 2] : last);
+  const chgPct = prev ? ((last - prev) / prev) * 100 : 0;
+  return { id: id, kind: "stock", last: last, chgPct: chgPct, spark: spark };
+}
+
+let indexCache = { at: 0, rows: [] };
+
+async function indexHandler(req, res) {
+  try {
+    if (indexCache.rows.length && Date.now() - indexCache.at < 45000) {
+      res.json({ ok: true, ts: indexCache.at, rows: indexCache.rows });
+      return;
+    }
+    const ids = parseIndexWatch();
+    const rows = [];
+    for (let i = 0; i < ids.length; i++) {
+      const id = ids[i];
+      try {
+        rows.push(isCryptoId(id) ? await cryptoIndex(id) : await stockIndex(id));
+      } catch (e) {
+        rows.push({ id: id, kind: isCryptoId(id) ? "crypto" : "stock", last: 0, chgPct: 0, spark: [] });
+      }
+    }
+    indexCache = { at: Date.now(), rows: rows };
+    res.json({ ok: true, ts: indexCache.at, rows: rows });
+  } catch (e) {
+    res.status(502).json({ ok: false, message: "index failed" });
+  }
+}
+
 function attach(app) {
   app.use(function (req, res, next) {
     if (req.method === "GET" && req.path === "/health") return health(req, res);
@@ -470,10 +543,11 @@ function attach(app) {
     if (req.method === "GET" && req.path === "/api/orders-history") return history(req, res);
     if (req.method === "GET" && req.path === "/api/fills") return fills(req, res);
     if (req.method === "GET" && req.path === "/api/wallets") return wallets(req, res);
+    if (req.method === "GET" && req.path === "/api/index") return indexHandler(req, res);
     if (req.method === "POST" && req.path === "/api/order") return order(req, res);
     if (req.method === "POST" && req.path === "/api/order-cancel") return cancel(req, res);
     next();
   });
 }
 
-module.exports = { attach };
+module.exports = { attach, walletsFromEnv };
